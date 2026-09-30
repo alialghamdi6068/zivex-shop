@@ -5,6 +5,11 @@ api-version: '26.2'
 author: VoidFlame
 website: https://github.com/alialghamdi6068/zivex-shop
 description: Configurable VoidFlameMC shop with Core economy integration and crate/spawner delivery bridges.
+softdepend:
+  - VoidFlame-Core
+  - PhoenixCrates
+  - PhoenixCrateLite
+  - SmartSpawner
 commands:
   shop:
     description: Open the Zivex shop.
