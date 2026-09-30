@@ -8,21 +8,27 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ShopManager {
     public record ItemDef(String category, String id, Material material, String name, int slot, double price,
-                          String currency, String delivery, int amount, String target, List<String> lore) {}
+                          String currency, String delivery, int amount, String target, List<String> lore, boolean enabled) {}
     public record Category(String id, String name, Material material, int slot, List<String> lore,
                            LinkedHashMap<String, ItemDef> items) {}
     public record Pending(ItemDef item, int quantity) {}
 
     private final ZivexShopPlugin plugin;
-    private final CoreEconomy economy;\n    private final ShardEconomy shards = new ShardEconomy();
+    private final CoreEconomy economy;
+    private final ShardEconomy shards = new ShardEconomy();
     private final LinkedHashMap<String, Category> categories = new LinkedHashMap<>();
     private final Map<UUID, Pending> pending = new HashMap<>();
+    private final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
     public ShopManager(ZivexShopPlugin plugin, CoreEconomy economy) {
         this.plugin = plugin;
@@ -31,6 +37,7 @@ public final class ShopManager {
 
     public void reload() {
         categories.clear();
+        pending.clear();
 
         ConfigurationSection root = plugin.getConfig().getConfigurationSection("categories");
         if (root == null) {
@@ -39,6 +46,7 @@ public final class ShopManager {
         }
 
         int categorySize = normalizedSize(plugin.getConfig().getInt("settings.category-size", 27));
+        int mainSize = normalizedSize(plugin.getConfig().getInt("settings.main-size", 27));
         Set<Integer> mainSlots = new HashSet<>();
 
         for (String rawId : root.getKeys(false)) {
@@ -50,6 +58,7 @@ public final class ShopManager {
             ConfigurationSection is = c.getConfigurationSection("items");
 
             if (is != null) {
+                Set<Integer> itemSlots = new HashSet<>();
                 for (String rawItemId : is.getKeys(false)) {
                     String itemId = rawItemId.toLowerCase(Locale.ROOT);
                     ConfigurationSection x = is.getConfigurationSection(rawItemId);
@@ -60,6 +69,10 @@ public final class ShopManager {
                         plugin.getLogger().warning("Invalid slot for " + id + "/" + itemId + ": " + slot);
                         continue;
                     }
+                    if (!itemSlots.add(slot)) {
+                        plugin.getLogger().warning("Duplicate item slot in " + id + ": " + slot);
+                        continue;
+                    }
 
                     double price = x.getDouble("price", -1);
                     if (!Double.isFinite(price) || price < 0) {
@@ -67,71 +80,45 @@ public final class ShopManager {
                         continue;
                     }
 
-                    ItemDef d = new ItemDef(
-                            id,
-                            itemId,
-                            material(x.getString("material"), Material.STONE),
-                            x.getString("name", itemId),
-                            slot,
-                            price,
-                            x.getString("currency", "MONEY"),
-                            x.getString("delivery", "VANILLA"),
-                            Math.max(1, x.getInt("amount", 1)),
-                            x.getString("target", itemId),
-                            x.getStringList("lore")
-                    );
+                    Material material = material(x.getString("material"), Material.STONE);
+                    int amount = Math.max(1, x.getInt("amount", 1));
+                    String delivery = x.getString("delivery", "VANILLA");
+                    boolean enabled = x.getBoolean("enabled", true);
 
+                    ItemDef d = new ItemDef(id, itemId, material, x.getString("name", itemId), slot, price,
+                            x.getString("currency", "MONEY"), delivery, amount,
+                            x.getString("target", itemId), x.getStringList("lore"), enabled);
                     items.put(itemId, d);
                 }
             }
 
             int mainSlot = c.getInt("slot", -1);
-            if (mainSlot < 0 || mainSlot >= normalizedSize(plugin.getConfig().getInt("settings.main-size", 27))) {
+            if (mainSlot < 0 || mainSlot >= mainSize) {
                 plugin.getLogger().warning("Invalid main slot for category " + id + ": " + mainSlot);
             } else if (!mainSlots.add(mainSlot)) {
                 plugin.getLogger().warning(plugin.msg("duplicate-slot").replace("{slot}", String.valueOf(mainSlot)));
             }
 
-            Category cat = new Category(
-                    id,
-                    c.getString("display-name", id),
-                    material(c.getString("material"), Material.CHEST),
-                    mainSlot,
-                    c.getStringList("lore"),
-                    items
-            );
-            categories.put(id, cat);
+            categories.put(id, new Category(id, c.getString("display-name", id),
+                    material(c.getString("material"), Material.CHEST), mainSlot,
+                    c.getStringList("lore"), items));
         }
 
         validateFixedMainSlots();
     }
 
     private void validateFixedMainSlots() {
-        Map<String, Integer> expected = Map.of(
-                "end", 11,
-                "nether", 12,
-                "gear", 13,
-                "food", 14,
-                "shard_shop", 15
-        );
+        Map<String, Integer> expected = Map.of("end", 11, "nether", 12, "gear", 13, "food", 14, "shard_shop", 15);
         for (Map.Entry<String, Integer> e : expected.entrySet()) {
             Category c = categories.get(e.getKey());
-            if (c == null) {
-                plugin.getLogger().warning("Missing required category: " + e.getKey());
-            } else if (c.slot() != e.getValue()) {
-                plugin.getLogger().warning("Category " + e.getKey() + " must use main slot " + e.getValue() + ", found " + c.slot());
-            }
+            if (c == null) plugin.getLogger().warning("Missing required category: " + e.getKey());
+            else if (c.slot() != e.getValue()) plugin.getLogger().warning(
+                    "Category " + e.getKey() + " must use main slot " + e.getValue() + ", found " + c.slot());
         }
     }
 
-    public Collection<Category> categories() {
-        return categories.values();
-    }
-
-    public Category category(String id) {
-        return id == null ? null : categories.get(id.toLowerCase(Locale.ROOT));
-    }
-
+    public Collection<Category> categories() { return categories.values(); }
+    public Category category(String id) { return id == null ? null : categories.get(id.toLowerCase(Locale.ROOT)); }
     public ItemDef item(String category, String id) {
         Category c = category(category);
         return c == null || id == null ? null : c.items().get(id.toLowerCase(Locale.ROOT));
@@ -140,50 +127,39 @@ public final class ShopManager {
     public void openMain(Player p) {
         int size = normalizedSize(plugin.getConfig().getInt("settings.main-size", 27));
         Inventory inv = Bukkit.createInventory(null, size,
-                ZivexShopPlugin.color(plugin.getConfig().getString("settings.main-title", "&8Shop")));
-
+                color(plugin.getConfig().getString("settings.main-title", "&8Shop")));
         for (Category c : categories.values()) {
-            if (c.slot() >= 0 && c.slot() < size) {
+            if (c.slot() >= 0 && c.slot() < size)
                 inv.setItem(c.slot(), icon(c.material(), c.name(), c.lore()));
-            }
         }
-
         p.openInventory(inv);
         sound(p, "open");
     }
 
     public void openCategory(Player p, String id) {
         Category c = category(id);
-        if (c == null) {
-            p.sendMessage(plugin.msg("invalid-category"));
-            return;
-        }
+        if (c == null) { p.sendMessage(plugin.msg("invalid-category")); return; }
 
         int size = normalizedSize(plugin.getConfig().getInt("settings.category-size", 27));
         String title = plugin.getConfig().getString("settings.category-title-format", "&8{category} Shop")
                 .replace("{category}", ChatText.strip(c.name()));
+        Inventory inv = Bukkit.createInventory(null, size, color(title));
 
-        Inventory inv = Bukkit.createInventory(null, size, ZivexShopPlugin.color(title));
-
-        Set<Integer> used = new HashSet<>();
         for (ItemDef d : c.items().values()) {
-            if (!used.add(d.slot())) {
-                plugin.getLogger().warning("Duplicate item slot in " + c.id() + ": " + d.slot());
-                continue;
-            }
+            if (!d.enabled()) continue;
             inv.setItem(d.slot(), icon(d.material(), d.name(), loreFor(d)));
         }
 
         int backSlot = plugin.getConfig().getInt("settings.back-slot", 22);
-        if (backSlot >= 0 && backSlot < size && !used.contains(backSlot)) {
+        if (backSlot >= 0 && backSlot < size)
             inv.setItem(backSlot, icon(Material.ARROW, "&cBack", List.of("&7Return to the main shop")));
-        }
 
         p.openInventory(inv);
         sound(p, "category");
     }
 
     public void openPurchase(Player p, ItemDef d, int quantity) {
+        if (!d.enabled()) { p.sendMessage(plugin.msg("item-disabled")); return; }
         int max = Math.max(1, plugin.getConfig().getInt("settings.max-quantity", 64));
         quantity = Math.max(1, Math.min(quantity, max));
         pending.put(p.getUniqueId(), new Pending(d, quantity));
@@ -191,15 +167,15 @@ public final class ShopManager {
         int size = normalizedSize(plugin.getConfig().getInt("settings.purchase-size", 27));
         String title = plugin.getConfig().getString("settings.purchase-title", "&8Purchase: {item}")
                 .replace("{item}", ChatText.strip(d.name()));
+        Inventory inv = Bukkit.createInventory(null, size, color(title));
 
-        Inventory inv = Bukkit.createInventory(null, size, ZivexShopPlugin.color(title));
-
+        double total = d.price() * quantity;
         inv.setItem(13, icon(d.material(), d.name(), List.of(
                 "&7Unit price: &f" + money(d.price(), d.currency()),
                 "&7Quantity: &f" + quantity,
-                "&7Total: &f" + money(d.price() * quantity, d.currency())
+                "&7Total: &f" + money(total, d.currency()),
+                "&7Balance: &f" + balanceText(p, d.currency())
         )));
-
         inv.setItem(11, icon(Material.RED_DYE, "&c-1", List.of("&7Decrease quantity")));
         inv.setItem(15, icon(Material.LIME_DYE, "&a+1", List.of("&7Increase quantity")));
         inv.setItem(21, icon(Material.GREEN_WOOL, "&aConfirm", List.of("&7Purchase now")));
@@ -209,19 +185,27 @@ public final class ShopManager {
         sound(p, "purchase");
     }
 
-    public Pending pending(Player p) {
-        return pending.get(p.getUniqueId());
-    }
-
-    public void clearPending(Player p) {
-        pending.remove(p.getUniqueId());
-    }
+    public Pending pending(Player p) { return pending.get(p.getUniqueId()); }
+    public void clearPending(Player p) { pending.remove(p.getUniqueId()); }
 
     private List<String> loreFor(ItemDef d) {
         List<String> l = new ArrayList<>(d.lore());
         l.add("&7Price: &f" + money(d.price(), d.currency()));
+        l.add("&7Per purchase: &f" + d.amount() + " item(s)");
         l.add("&eClick to purchase");
         return l;
+    }
+
+    private String balanceText(Player p, String currency) {
+        if ("MONEY".equalsIgnoreCase(currency)) {
+            double value = economy.balance(p.getUniqueId());
+            return value < 0 ? "&cUnavailable" : money(value, currency);
+        }
+        if ("SHARDS".equalsIgnoreCase(currency)) {
+            long value = shards.balance(p.getUniqueId());
+            return value < 0 ? "&cUnavailable" : money(value, currency);
+        }
+        return "&cUnavailable";
     }
 
     private String money(double n, String currency) {
@@ -231,15 +215,13 @@ public final class ShopManager {
     }
 
     private String trim(double n) {
-        return Math.rint(n) == n
-                ? String.format(Locale.US, "%,.0f", n)
-                : String.format(Locale.US, "%,.2f", n);
+        return Math.rint(n) == n ? String.format(Locale.US, "%,.0f", n) : String.format(Locale.US, "%,.2f", n);
     }
 
     private ItemStack icon(Material m, String name, List<String> lore) {
         ItemStack i = new ItemStack(m);
         ItemMeta meta = i.getItemMeta();
-        meta.setDisplayName(ZivexShopPlugin.color(name));
+        meta.setDisplayName(color(name));
         meta.setLore(lore.stream().map(ZivexShopPlugin::color).toList());
         i.setItemMeta(meta);
         return i;
@@ -247,80 +229,124 @@ public final class ShopManager {
 
     private Material material(String s, Material fallback) {
         if (s == null) return fallback;
-        try {
-            return Material.valueOf(s.toUpperCase(Locale.ROOT));
-        } catch (Exception e) {
-            plugin.getLogger().warning("Unknown material: " + s);
-            return fallback;
-        }
+        try { return Material.valueOf(s.toUpperCase(Locale.ROOT)); }
+        catch (Exception e) { plugin.getLogger().warning("Unknown material: " + s); return fallback; }
     }
 
     public boolean purchase(Player p, Pending pd) {
-        ItemDef d = pd.item();
-        int q = pd.quantity();
-        double total = d.price() * q;
+        UUID id = p.getUniqueId();
+        if (!processing.add(id)) {
+            p.sendMessage(plugin.msg("purchase-processing"));
+            return false;
+        }
 
-        if (total < 0 || !Double.isFinite(total)) return false;
+        try {
+            ItemDef d = pd.item();
+            int q = pd.quantity();
+            long deliveryAmount;
+            try { deliveryAmount = Math.multiplyExact((long) q, (long) d.amount()); }
+            catch (ArithmeticException ex) { p.sendMessage(plugin.msg("invalid-amount")); return false; }
 
-        if ("MONEY".equalsIgnoreCase(d.currency())) {
-            double balance = economy.balance(p.getUniqueId());
-            if (balance < 0) {
-                p.sendMessage(plugin.msg("no-economy"));
-                return false;
-            }
-            if (balance < total || !economy.withdraw(p.getUniqueId(), total)) {
-                p.sendMessage(plugin.msg("insufficient")
-                        .replace("{price}", money(total, d.currency()))
-                        .replace("{currency}", "money"));
+            double total = d.price() * q;
+            if (!Double.isFinite(total) || total < 0) { p.sendMessage(plugin.msg("invalid-price")); return false; }
+
+            if ("VANILLA".equalsIgnoreCase(d.delivery()) && !canFit(p, createDeliveryItem(d), deliveryAmount)) {
+                p.sendMessage(plugin.msg("inventory-full"));
                 sound(p, "fail");
                 return false;
             }
-        } else if ("SHARDS".equalsIgnoreCase(d.currency())) {
-            p.sendMessage(plugin.msg("no-shard-economy"));
-            sound(p, "fail");
-            return false;
-        } else {
-            p.sendMessage(plugin.msg("unsupported-currency").replace("{currency}", d.currency()));
-            sound(p, "fail");
-            return false;
-        }
 
-        boolean delivered = deliver(p, d, q);
-        if (!delivered) {
-            if ("MONEY".equalsIgnoreCase(d.currency())
-                    && plugin.getConfig().getBoolean("settings.refund-on-delivery-failure", true)) {
-                economy.deposit(p.getUniqueId(), total);
+            boolean charged;
+            if ("MONEY".equalsIgnoreCase(d.currency())) {
+                double balance = economy.balance(id);
+                if (balance < 0) { p.sendMessage(plugin.msg("no-economy")); return false; }
+                charged = balance >= total && economy.withdraw(id, total);
+            } else if ("SHARDS".equalsIgnoreCase(d.currency())) {
+                long shardPrice;
+                try { shardPrice = Math.multiplyExact(Math.round(d.price()), (long) q); }
+                catch (ArithmeticException ex) { p.sendMessage(plugin.msg("invalid-shard-price")); return false; }
+                if (d.price() != Math.rint(d.price()) || shardPrice < 0) {
+                    p.sendMessage(plugin.msg("invalid-shard-price")); return false;
+                }
+                long balance = shards.balance(id);
+                if (balance < 0) { p.sendMessage(plugin.msg("no-shard-economy")); return false; }
+                charged = balance >= shardPrice && shards.withdraw(id, shardPrice);
+            } else {
+                p.sendMessage(plugin.msg("unsupported-currency").replace("{currency}", d.currency()));
+                return false;
             }
-            p.sendMessage(plugin.msg("delivery-failed"));
-            sound(p, "fail");
-            return false;
+
+            if (!charged) {
+                p.sendMessage(plugin.msg("insufficient").replace("{price}", money(total, d.currency()))
+                        .replace("{currency}", d.currency()));
+                sound(p, "fail");
+                return false;
+            }
+
+            boolean delivered = deliver(p, d, (int) deliveryAmount);
+            if (!delivered) {
+                refund(p, d.currency(), total, d, q);
+                p.sendMessage(plugin.msg("delivery-failed"));
+                sound(p, "fail");
+                return false;
+            }
+
+            p.sendMessage(plugin.msg("purchased")
+                    .replace("{amount}", String.valueOf(deliveryAmount))
+                    .replace("{item}", ChatText.strip(d.name()))
+                    .replace("{total}", money(total, d.currency()))
+                    .replace("{currency}", d.currency()));
+            sound(p, "success");
+            return true;
+        } finally {
+            processing.remove(id);
         }
-
-        p.sendMessage(plugin.msg("purchased")
-                .replace("{amount}", String.valueOf(q * d.amount()))
-                .replace("{item}", ChatText.strip(d.name()))
-                .replace("{total}", money(total, d.currency()))
-                .replace("{currency}", d.currency()));
-
-        sound(p, "success");
-        return true;
     }
 
-    private boolean deliver(Player p, ItemDef d, int q) {
-        if ("VANILLA".equalsIgnoreCase(d.delivery())) {
-            int left = q * d.amount();
-            ItemStack stack = new ItemStack(d.material());
+    private void refund(Player p, String currency, double total, ItemDef d, int quantity) {
+        if (!plugin.getConfig().getBoolean("settings.refund-on-delivery-failure", true)) return;
+        if ("MONEY".equalsIgnoreCase(currency)) {
+            economy.deposit(p.getUniqueId(), total);
+        } else if ("SHARDS".equalsIgnoreCase(currency)) {
+            long amount = Math.round(d.price() * quantity);
+            if (!shards.deposit(p.getUniqueId(), amount))
+                plugin.getLogger().severe("CRITICAL: failed to refund " + amount + " shards to " + p.getName());
+        }
+    }
 
+    private ItemStack createDeliveryItem(ItemDef d) {
+        ItemStack stack = new ItemStack(d.material(), 1);
+        if ("slow_falling_arrow".equalsIgnoreCase(d.id()) || "Arrow of Slow Falling".equalsIgnoreCase(ChatText.strip(d.name()))) {
+            if (stack.getItemMeta() instanceof PotionMeta meta) {
+                meta.setBasePotionType(org.bukkit.potion.PotionType.LONG_SLOW_FALLING);
+                stack.setItemMeta(meta);
+            }
+        }
+        return stack;
+    }
+
+    private boolean canFit(Player p, ItemStack template, long amount) {
+        if (amount <= 0) return false;
+        long free = 0;
+        int maxStack = Math.max(1, template.getMaxStackSize());
+        for (ItemStack current : p.getInventory().getStorageContents()) {
+            if (current == null || current.getType().isAir()) free += maxStack;
+            else if (current.isSimilar(template)) free += Math.max(0, maxStack - current.getAmount());
+            if (free >= amount) return true;
+        }
+        return false;
+    }
+
+    private boolean deliver(Player p, ItemDef d, int amount) {
+        if ("VANILLA".equalsIgnoreCase(d.delivery())) {
+            ItemStack stack = createDeliveryItem(d);
+            int max = Math.max(1, stack.getMaxStackSize());
+            int left = amount;
             while (left > 0) {
-                int n = Math.min(left, stack.getMaxStackSize());
+                int n = Math.min(left, max);
                 ItemStack part = stack.clone();
                 part.setAmount(n);
-                Map<Integer, ItemStack> overflow = p.getInventory().addItem(part);
-                if (!overflow.isEmpty()) {
-                    for (ItemStack item : overflow.values()) {
-                        p.getWorld().dropItemNaturally(p.getLocation(), item);
-                    }
-                }
+                if (!p.getInventory().addItem(part).isEmpty()) return false;
                 left -= n;
             }
             return true;
@@ -328,40 +354,27 @@ public final class ShopManager {
 
         if ("CRATE_KEY".equalsIgnoreCase(d.delivery())) {
             if (!plugin.getConfig().getBoolean("integrations.phoenix-crate-lite.enabled", true)) return false;
-            return dispatch(
-                    plugin.getConfig().getString("integrations.phoenix-crate-lite.key-command", "/crates giveKey {key} {player} {amount}"),
-                    p, d.target(), q
-            );
+            return dispatch(plugin.getConfig().getString("integrations.phoenix-crate-lite.key-command",
+                    "/crates giveKey {key} {player} {amount}"), p, d.target(), amount);
         }
 
         if ("SPAWNER".equalsIgnoreCase(d.delivery())) {
             if (!plugin.getConfig().getBoolean("integrations.smart-spawners.enabled", true)) return false;
-            return dispatch(
-                    plugin.getConfig().getString("integrations.smart-spawners.spawner-command", "/ss give {player} smart_spawner {type} {amount}"),
-                    p, d.target(), q
-            );
+            return dispatch(plugin.getConfig().getString("integrations.smart-spawners.spawner-command",
+                    "/ss give {player} smart_spawner {type} {amount}"), p, d.target(), amount);
         }
 
-        if ("COMMAND".equalsIgnoreCase(d.delivery())) {
-            return dispatch(d.target(), p, d.target(), q);
-        }
-
+        if ("COMMAND".equalsIgnoreCase(d.delivery())) return dispatch(d.target(), p, d.target(), amount);
         return false;
     }
 
     private boolean dispatch(String raw, Player p, String target, int amount) {
         if (raw == null || raw.isBlank()) return false;
-
         String cmd = raw.trim();
         if (cmd.startsWith("/")) cmd = cmd.substring(1);
-
-        cmd = cmd.replace("{player}", p.getName())
-                .replace("{key}", target)
-                .replace("{type}", target)
-                .replace("{amount}", String.valueOf(amount));
-
-        ConsoleCommandSender console = Bukkit.getConsoleSender();
-        return Bukkit.dispatchCommand(console, cmd);
+        cmd = cmd.replace("{player}", p.getName()).replace("{key}", target)
+                .replace("{type}", target).replace("{amount}", String.valueOf(amount));
+        return Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
     }
 
     private void sound(Player p, String key) {
@@ -370,10 +383,10 @@ public final class ShopManager {
         if (raw == null || raw.isBlank()) return;
         try {
             Sound sound = Sound.valueOf(raw.toUpperCase(Locale.ROOT));
-            float volume = (float) plugin.getConfig().getDouble("sounds." + key + ".volume", 1.0);
-            float pitch = (float) plugin.getConfig().getDouble("sounds." + key + ".pitch", 1.0);
-            p.playSound(p.getLocation(), sound, volume, pitch);
-        } catch (IllegalArgumentException ignored) {
+            p.playSound(p.getLocation(), sound,
+                    (float) plugin.getConfig().getDouble("sounds." + key + ".volume", 1),
+                    (float) plugin.getConfig().getDouble("sounds." + key + ".pitch", 1));
+        } catch (IllegalArgumentException e) {
             plugin.getLogger().warning("Unknown configured sound for " + key + ": " + raw);
         }
     }
@@ -387,27 +400,36 @@ public final class ShopManager {
     public boolean setPrice(String cat, String id, double price) {
         if (item(cat, id) == null || !Double.isFinite(price) || price < 0) return false;
         plugin.getConfig().set("categories." + cat + ".items." + id + ".price", price);
-        plugin.saveConfig();
-        reload();
-        return true;
+        plugin.saveConfig(); reload(); return true;
     }
 
     public boolean setSlot(String cat, String id, int slot) {
         int size = normalizedSize(plugin.getConfig().getInt("settings.category-size", 27));
-        if (item(cat, id) == null || slot < 0 || slot >= size) return false;
+        Category c = category(cat);
+        if (c == null || item(cat, id) == null || slot < 0 || slot >= size) return false;
+        for (ItemDef other : c.items().values())
+            if (!other.id().equalsIgnoreCase(id) && other.enabled() && other.slot() == slot) return false;
         plugin.getConfig().set("categories." + cat + ".items." + id + ".slot", slot);
-        plugin.saveConfig();
-        reload();
-        return true;
+        plugin.saveConfig(); reload(); return true;
     }
 
-    public boolean give(Player target, ItemDef d, int amount) {
-        return deliver(target, d, amount);
+    public boolean setEnabled(String cat, String id, boolean enabled) {
+        if (item(cat, id) == null) return false;
+        plugin.getConfig().set("categories." + cat + ".items." + id + ".enabled", enabled);
+        plugin.saveConfig(); reload(); return true;
     }
+
+    public boolean give(Player target, ItemDef d, int quantity) {
+        if (quantity < 1) return false;
+        long amount;
+        try { amount = Math.multiplyExact((long) quantity, d.amount()); } catch (ArithmeticException e) { return false; }
+        if ("VANILLA".equalsIgnoreCase(d.delivery()) && !canFit(target, createDeliveryItem(d), amount)) return false;
+        return deliver(target, d, (int) amount);
+    }
+
+    static String color(String s) { return ZivexShopPlugin.color(s); }
 
     static final class ChatText {
-        static String strip(String s) {
-            return org.bukkit.ChatColor.stripColor(ZivexShopPlugin.color(s));
-        }
+        static String strip(String s) { return org.bukkit.ChatColor.stripColor(ZivexShopPlugin.color(s)); }
     }
 }
