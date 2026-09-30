@@ -8,6 +8,7 @@ settings:
   close-on-purchase: true
   sounds: true
   currency-symbol: "$"
+  shard-currency-name: "Shards"
   max-quantity: 64
   quantity-step: 1
   refund-on-delivery-failure: true
@@ -27,6 +28,7 @@ integrations:
   smart-spawners:
     enabled: true
     spawner-command: "ss give {player} smart_spawner {type} {amount}"
+    note: "target must match the top-level name in SmartSpawner spawner_mobs.yml."
 
 messages:
   prefix: "&8[&5ZivexShop&8] &r"
@@ -37,6 +39,7 @@ messages:
   invalid-category: "&cUnknown shop category."
   duplicate-slot: "&c[Shop] ERROR: Duplicate slot detected: {slot}"
   no-economy: "&cVoidFlame-Core economy service is unavailable."
+  no-shard-economy: "&cZivexShards is not installed or configured yet. Shard purchases are disabled."
   insufficient: "&cYou need {price} {currency}."
   purchased: "&aPurchased &f{amount}x {item} &afor &f{total} {currency}&a."
   delivery-failed: "&cPurchase failed while delivering the item. Your balance was restored."
