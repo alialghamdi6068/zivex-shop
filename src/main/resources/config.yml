@@ -5,6 +5,7 @@ settings:
   main-size: 27
   category-size: 27
   purchase-size: 27
+  back-slot: 22
   close-on-purchase: true
   sounds: true
   currency-symbol: "$"
@@ -24,11 +25,33 @@ economy:
 integrations:
   phoenix-crate-lite:
     enabled: true
-    key-command: "crate key give {player} {key} {amount}"
+    key-command: "/crates giveKey {key} {player} {amount}"
   smart-spawners:
     enabled: true
-    spawner-command: "ss give {player} smart_spawner {type} {amount}"
-    note: "target must match the top-level name in SmartSpawner spawner_mobs.yml."
+    spawner-command: "/ss give {player} smart_spawner {type} {amount}"
+    note: "SmartSpawner target must match a top-level name in spawner_mobs.yml."
+
+sounds:
+  open:
+    sound: "BLOCK_CHEST_OPEN"
+    volume: 0.8
+    pitch: 1.0
+  category:
+    sound: "BLOCK_CHEST_OPEN"
+    volume: 0.8
+    pitch: 1.05
+  purchase:
+    sound: "UI_BUTTON_CLICK"
+    volume: 0.7
+    pitch: 1.0
+  success:
+    sound: "ENTITY_PLAYER_LEVELUP"
+    volume: 0.8
+    pitch: 1.1
+  fail:
+    sound: "ENTITY_VILLAGER_NO"
+    volume: 0.7
+    pitch: 1.0
 
 messages:
   prefix: "&8[&5ZivexShop&8] &r"
@@ -40,6 +63,7 @@ messages:
   duplicate-slot: "&c[Shop] ERROR: Duplicate slot detected: {slot}"
   no-economy: "&cVoidFlame-Core economy service is unavailable."
   no-shard-economy: "&cZivexShards is not installed or configured yet. Shard purchases are disabled."
+  unsupported-currency: "&cUnsupported shop currency: {currency}."
   insufficient: "&cYou need {price} {currency}."
   purchased: "&aPurchased &f{amount}x {item} &afor &f{total} {currency}&a."
   delivery-failed: "&cPurchase failed while delivering the item. Your balance was restored."
@@ -60,6 +84,7 @@ categories:
       popped_chorus: {material: POPPED_CHORUS_FRUIT, name: "&dPopped Chorus Fruit", slot: 16, price: 24, currency: MONEY, delivery: VANILLA, amount: 1}
       shulker_shell: {material: SHULKER_SHELL, name: "&5Shulker Shell", slot: 19, price: 350, currency: MONEY, delivery: VANILLA, amount: 1}
       shulker_box: {material: SHULKER_BOX, name: "&5Shulker Box", slot: 20, price: 800, currency: MONEY, delivery: VANILLA, amount: 1}
+
   nether:
     display-name: "&cNether"
     material: NETHERRACK
@@ -75,6 +100,7 @@ categories:
       soul_sand: {material: SOUL_SAND, name: "&6Soul Sand", slot: 16, price: 50, currency: MONEY, delivery: VANILLA, amount: 1}
       magma_block: {material: MAGMA_BLOCK, name: "&6Magma Block", slot: 19, price: 35, currency: MONEY, delivery: VANILLA, amount: 1}
       crying_obsidian: {material: CRYING_OBSIDIAN, name: "&5Crying Obsidian", slot: 20, price: 150, currency: MONEY, delivery: VANILLA, amount: 1}
+
   gear:
     display-name: "&bGear"
     material: TOTEM_OF_UNDYING
@@ -90,6 +116,7 @@ categories:
       golden_apple: {material: GOLDEN_APPLE, name: "&6Golden Apple", slot: 16, price: 250, currency: MONEY, delivery: VANILLA, amount: 1}
       xp_bottle: {material: EXPERIENCE_BOTTLE, name: "&aBottle o' Enchanting", slot: 19, price: 100, currency: MONEY, delivery: VANILLA, amount: 1}
       slow_falling_arrow: {material: TIPPED_ARROW, name: "&fArrow of Slow Falling", slot: 20, price: 500, currency: MONEY, delivery: VANILLA, amount: 1}
+
   food:
     display-name: "&aFood"
     material: COOKED_BEEF
@@ -105,9 +132,22 @@ categories:
       steak: {material: COOKED_BEEF, name: "&6Steak", slot: 16, price: 35, currency: MONEY, delivery: VANILLA, amount: 1}
       golden_carrot: {material: GOLDEN_CARROT, name: "&6Golden Carrot", slot: 19, price: 120, currency: MONEY, delivery: VANILLA, amount: 1}
       golden_apple: {material: GOLDEN_APPLE, name: "&6Golden Apple", slot: 20, price: 250, currency: MONEY, delivery: VANILLA, amount: 1}
+
   shard_shop:
     display-name: "&dShard Shop"
     material: AMETHYST_SHARD
     slot: 15
-    lore: ["&7Shard economy is provided by the separate shard plugin."]
-    items: {}
+    lore: ["&7Purchase crates and SmartSpawner spawners with Shards"]
+    items:
+      pig_spawner: {material: SPAWNER, name: "&fPig Spawner", slot: 10, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, target: pig_spawner}
+      cow_spawner: {material: SPAWNER, name: "&fCow Spawner", slot: 11, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, target: cow_spawner}
+      zombie_spawner: {material: SPAWNER, name: "&2Zombie Spawner", slot: 12, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, target: zombie_spawner}
+      spider_spawner: {material: SPAWNER, name: "&4Spider Spawner", slot: 13, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, target: spider_spawner}
+      skeleton_spawner: {material: SPAWNER, name: "&fSkeleton Spawner", slot: 14, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, target: skeleton_spawner}
+      creeper_spawner: {material: SPAWNER, name: "&aCreeper Spawner", slot: 15, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, target: creeper_spawner}
+      zombified_piglin_spawner: {material: SPAWNER, name: "&6Zombified Piglin Spawner", slot: 16, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, target: zombified_piglin_spawner}
+      blaze_spawner: {material: SPAWNER, name: "&6Blaze Spawner", slot: 19, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, target: blaze_spawner}
+      iron_golem_spawner: {material: SPAWNER, name: "&fIron Golem Spawner", slot: 20, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, target: iron_golem_spawner}
+      common_key: {material: TRIPWIRE_HOOK, name: "&fCommon Key", slot: 21, price: 200, currency: SHARDS, delivery: CRATE_KEY, amount: 1, target: common}
+      crimson_key: {material: TRIPWIRE_HOOK, name: "&cCrimson Key", slot: 22, price: 2500, currency: SHARDS, delivery: CRATE_KEY, amount: 1, target: crimson}
+      prime_key: {material: TRIPWIRE_HOOK, name: "&6Prime Key", slot: 23, price: 2500, currency: SHARDS, delivery: CRATE_KEY, amount: 1, target: prime}
