@@ -7,11 +7,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ZivexShopPlugin extends JavaPlugin {
     private ShopManager shop;
-    private CoreEconomy economy;
+    private EconomyStore economy;
 
     @Override public void onEnable() {
         saveDefaultConfig();
-        economy = new CoreEconomy(this);
+        economy = new EconomyStore(this);
         shop = new ShopManager(this, economy);
         shop.reload();
         ShopAdminGui adminGui = new ShopAdminGui(this, shop);
@@ -22,7 +22,7 @@ public final class ZivexShopPlugin extends JavaPlugin {
         PluginCommand adminCommand = getCommand("shopadmin");
         if (shopCommand != null) { shopCommand.setExecutor(command); shopCommand.setTabCompleter(command); }
         if (adminCommand != null) { adminCommand.setExecutor(command); adminCommand.setTabCompleter(command); }
-        getLogger().info("ZivexShop enabled. Main GUI: 27 slots. Economy: Core. Shards: ZivexShards.");
+        getLogger().info("ZivexShop enabled. Main GUI: 27 slots. Economy: Built-in. Shards: ZivexShards.");
     }
 
     public void reloadShop() { reloadConfig(); shop.reload(); }
