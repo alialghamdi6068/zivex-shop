@@ -68,6 +68,11 @@ public final class ShopManager {
         if("MONEY".equalsIgnoreCase(d.currency())){
             if(plugin.getConfig().getBoolean("economy.required",true)&&economy.balance(p.getUniqueId())<0){p.sendMessage(plugin.msg("no-economy"));return false;}
             if(economy.balance(p.getUniqueId())<total||!economy.withdraw(p.getUniqueId(),total)){p.sendMessage(plugin.msg("insufficient").replace("{price}",money(total,d.currency())).replace("{currency}","money"));return false;}
+        } else if("SHARDS".equalsIgnoreCase(d.currency())) {
+            // Shards belong to the separate ZivexShards plugin. Never deliver these items until that economy is integrated.
+            p.sendMessage(plugin.msg("no-shard-economy"));return false;
+        } else {
+            p.sendMessage(plugin.msg("no-shard-economy"));return false;
         }
         boolean delivered=deliver(p,d,q);
         if(!delivered){if("MONEY".equalsIgnoreCase(d.currency())&&plugin.getConfig().getBoolean("settings.refund-on-delivery-failure",true))economy.deposit(p.getUniqueId(),total);p.sendMessage(plugin.msg("delivery-failed"));return false;}
