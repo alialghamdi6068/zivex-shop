@@ -9,7 +9,7 @@ softdepend:
   - VoidFlame-Core
   - PhoenixCrates
   - PhoenixCrateLite
-  - SmartSpawner
+  - SmartSpawner\n  - ZivexShards
 commands:
   shop:
     description: Open the Zivex shop.
