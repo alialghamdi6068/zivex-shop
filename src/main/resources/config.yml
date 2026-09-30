@@ -26,7 +26,7 @@ integrations:
     key-command: "crate key give {player} {key} {amount}"
   smart-spawners:
     enabled: true
-    spawner-command: "smartspawners give {player} {type} {amount}"
+    spawner-command: "ss give {player} smart_spawner {type} {amount}"
 
 messages:
   prefix: "&8[&5ZivexShop&8] &r"
