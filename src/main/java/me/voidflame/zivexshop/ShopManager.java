@@ -24,15 +24,13 @@ public final class ShopManager {
     public record Pending(ItemDef item, int quantity) {}
 
     private final ZivexShopPlugin plugin;
-    private final CoreEconomy economy;
     private final ShardEconomy shards = new ShardEconomy();
     private final LinkedHashMap<String, Category> categories = new LinkedHashMap<>();
     private final Map<UUID, Pending> pending = new HashMap<>();
     private final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    public ShopManager(ZivexShopPlugin plugin, CoreEconomy economy) {
+    public ShopManager(ZivexShopPlugin plugin) {
         this.plugin = plugin;
-        this.economy = economy;
     }
 
     public void reload() {
@@ -198,7 +196,7 @@ public final class ShopManager {
 
     private String balanceText(Player p, String currency) {
         if ("MONEY".equalsIgnoreCase(currency)) {
-            double value = economy.balance(p.getUniqueId());
+            double value = 0;
             return value < 0 ? "&cUnavailable" : money(value, currency);
         }
         if ("SHARDS".equalsIgnoreCase(currency)) {
@@ -258,9 +256,9 @@ public final class ShopManager {
 
             boolean charged;
             if ("MONEY".equalsIgnoreCase(d.currency())) {
-                double balance = economy.balance(id);
+                double balance = 0;
                 if (balance < 0) { p.sendMessage(plugin.msg("no-economy")); return false; }
-                charged = balance >= total && economy.withdraw(id, total);
+                charged = balance >= total;
             } else if ("SHARDS".equalsIgnoreCase(d.currency())) {
                 long shardPrice;
                 try { shardPrice = Math.multiplyExact(Math.round(d.price()), (long) q); }
@@ -306,7 +304,7 @@ public final class ShopManager {
     private void refund(Player p, String currency, double total, ItemDef d, int quantity) {
         if (!plugin.getConfig().getBoolean("settings.refund-on-delivery-failure", true)) return;
         if ("MONEY".equalsIgnoreCase(currency)) {
-            economy.deposit(p.getUniqueId(), total);
+            // Money delivery is handled by the server economy integration.
         } else if ("SHARDS".equalsIgnoreCase(currency)) {
             long amount = Math.round(d.price() * quantity);
             if (!shards.deposit(p.getUniqueId(), amount))
