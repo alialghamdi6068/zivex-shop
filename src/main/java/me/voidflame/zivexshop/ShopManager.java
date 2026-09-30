@@ -196,7 +196,7 @@ public final class ShopManager {
 
     private String balanceText(Player p, String currency) {
         if ("MONEY".equalsIgnoreCase(currency)) {
-            double value = 0;
+            double value = economy.balance(p.getUniqueId());
             return value < 0 ? "&cUnavailable" : money(value, currency);
         }
         if ("SHARDS".equalsIgnoreCase(currency)) {
@@ -256,9 +256,9 @@ public final class ShopManager {
 
             boolean charged;
             if ("MONEY".equalsIgnoreCase(d.currency())) {
-                double balance = 0;
+                double balance = economy.balance(id);
                 if (balance < 0) { p.sendMessage(plugin.msg("no-economy")); return false; }
-                charged = balance >= total;
+                charged = balance >= total && economy.withdraw(id, total);
             } else if ("SHARDS".equalsIgnoreCase(d.currency())) {
                 long shardPrice;
                 try { shardPrice = Math.multiplyExact(Math.round(d.price()), (long) q); }
@@ -304,7 +304,7 @@ public final class ShopManager {
     private void refund(Player p, String currency, double total, ItemDef d, int quantity) {
         if (!plugin.getConfig().getBoolean("settings.refund-on-delivery-failure", true)) return;
         if ("MONEY".equalsIgnoreCase(currency)) {
-            // Money delivery is handled by the server economy integration.
+            economy.deposit(p.getUniqueId(), total);
         } else if ("SHARDS".equalsIgnoreCase(currency)) {
             long amount = Math.round(d.price() * quantity);
             if (!shards.deposit(p.getUniqueId(), amount))
