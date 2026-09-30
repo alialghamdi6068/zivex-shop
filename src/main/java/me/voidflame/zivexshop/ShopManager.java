@@ -115,6 +115,11 @@ public final class ShopManager {
         }
     }
 
+    public double money(Player p) { return economy.balance(p.getUniqueId()); }
+    public boolean moneyDeposit(Player p, double amount) { return economy.deposit(p.getUniqueId(), amount); }
+    public boolean moneyWithdraw(Player p, double amount) { return economy.withdraw(p.getUniqueId(), amount); }
+    public boolean moneySet(Player p, double amount) { return economy.set(p.getUniqueId(), amount); }
+
     public Collection<Category> categories() { return categories.values(); }
     public Category category(String id) { return id == null ? null : categories.get(id.toLowerCase(Locale.ROOT)); }
     public ItemDef item(String category, String id) {
