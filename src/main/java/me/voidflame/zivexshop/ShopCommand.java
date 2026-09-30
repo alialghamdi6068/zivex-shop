@@ -47,6 +47,7 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
             case "setslot" -> setSlot(sender, args);
             case "enable", "disable" -> setEnabled(sender, args, sub.equals("enable"));
             case "give" -> give(sender, args);
+            case "money" -> money(sender, args);
             default -> sender.sendMessage(plugin.msg("admin-usage"));
         }
         return true;
@@ -90,6 +91,25 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(shop.setEnabled(a[1], a[2], enabled) ? plugin.msg("item-updated") : plugin.msg("invalid-item"));
     }
 
+    private void money(CommandSender sender, String[] a) {
+        if (a.length < 3) { sender.sendMessage(ZivexShopPlugin.color("&cUsage: /shopadmin money <balance|give|take|set> <player> [amount]")); return; }
+        Player target = Bukkit.getPlayerExact(a[2]);
+        if (target == null) { sender.sendMessage(plugin.msg("player-not-found")); return; }
+        if (a[1].equalsIgnoreCase("balance")) { sender.sendMessage(ZivexShopPlugin.color("&d" + target.getName() + " &7balance: &f$" + shop.money(target))); return; }
+        if (a.length < 4) { sender.sendMessage(ZivexShopPlugin.color("&cAmount required.")); return; }
+        try {
+            double amount = Double.parseDouble(a[3]);
+            if (!Double.isFinite(amount) || amount < 0) throw new NumberFormatException();
+            boolean ok = switch (a[1].toLowerCase(Locale.ROOT)) {
+                case "give" -> shop.moneyDeposit(target, amount);
+                case "take" -> shop.moneyWithdraw(target, amount);
+                case "set" -> shop.moneySet(target, amount);
+                default -> false;
+            };
+            sender.sendMessage(ZivexShopPlugin.color(ok ? "&aMoney updated successfully." : "&cMoney operation failed."));
+        } catch (NumberFormatException e) { sender.sendMessage(plugin.msg("invalid-number")); }
+    }
+
     private void give(CommandSender sender, String[] a) {
         if (a.length < 4) { sender.sendMessage(plugin.msg("admin-usage")); return; }
         Player target = Bukkit.getPlayerExact(a[1]);
@@ -113,7 +133,9 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
 
     @Override public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] a) {
         if (!command.getName().equalsIgnoreCase("shopadmin") || !sender.hasPermission("zivexshop.admin")) return List.of();
-        if (a.length == 1) return List.of("gui","reload","list","debug","setprice","setslot","enable","disable","give");
+        if (a.length == 1) return List.of("gui","reload","list","debug","setprice","setslot","enable","disable","give","money");
+        if (a.length == 2 && a[0].equalsIgnoreCase("money")) return List.of("balance","give","take","set");
+        if (a.length == 3 && a[0].equalsIgnoreCase("money")) return Bukkit.getOnlinePlayers().stream().map(Player::getName).sorted().toList();
         if (a.length == 2 && a[0].equalsIgnoreCase("give")) return Bukkit.getOnlinePlayers().stream().map(Player::getName).sorted().toList();
         if ((a[0].equalsIgnoreCase("give") || a[0].equalsIgnoreCase("setprice") || a[0].equalsIgnoreCase("setslot")
                 || a[0].equalsIgnoreCase("enable") || a[0].equalsIgnoreCase("disable")) && a.length == 2)
