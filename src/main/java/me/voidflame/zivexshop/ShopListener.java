@@ -12,10 +12,10 @@ public final class ShopListener implements Listener {
     private final ShopManager shop;
     private final ShopAdminGui adminGui;
 
-    public ShopListener(ZivexShopPlugin plugin, ShopManager shop) {
+    public ShopListener(ZivexShopPlugin plugin, ShopManager shop, ShopAdminGui adminGui) {
         this.plugin = plugin;
         this.shop = shop;
-        this.adminGui = new ShopAdminGui(plugin, shop);
+        this.adminGui = adminGui;
     }
 
     public ShopAdminGui adminGui() { return adminGui; }
