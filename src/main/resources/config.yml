@@ -29,7 +29,7 @@ settings:
 
   # قاعدة البيانات المحلية.
   # يبقى الملف database.db هو ملف البيانات الأساسي للمتجر.
-  database-file: "database.db"
+  database-file: "../Zivex/database.db"
 
 integrations:
   phoenix-crate-lite:
