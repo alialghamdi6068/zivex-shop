@@ -62,7 +62,7 @@ messages:
   invalid-category: "&cUnknown shop category."
   duplicate-slot: "&c[Shop] ERROR: Duplicate slot detected: {slot}"
   no-economy: "&cVoidFlame-Core economy service is unavailable."
-  no-shard-economy: "&cZivexShards is not installed or configured yet. Shard purchases are disabled."
+  no-shard-economy: "&cZivexShards is unavailable right now. Please try again shortly."\n  invalid-shard-price: "&cThis Shards price is invalid."
   unsupported-currency: "&cUnsupported shop currency: {currency}."
   insufficient: "&cYou need {price} {currency}."
   purchased: "&aPurchased &f{amount}x {item} &afor &f{total} {currency}&a."
