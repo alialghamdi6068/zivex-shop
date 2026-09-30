@@ -4,21 +4,24 @@ main: me.voidflame.zivexshop.ZivexShopPlugin
 api-version: '26.2'
 author: VoidFlame
 website: https://github.com/alialghamdi6068/zivex-shop
-description: Configurable VoidFlameMC shop with Core economy integration and crate/spawner delivery bridges.
+description: Configurable VoidFlameMC shop with Core economy, Shards, crate and spawner delivery integrations.
 softdepend:
   - VoidFlame-Core
   - PhoenixCrates
   - PhoenixCrateLite
-  - SmartSpawner\n  - ZivexShards
+  - SmartSpawner
+  - ZivexShards
 commands:
   shop:
     description: Open the Zivex shop.
     aliases: [zivexshop]
-    usage: /shop [reload|list|give|setprice|setslot]
+    usage: /shop
+    permission: zivexshop.use
   shopadmin:
     description: Administrative ZivexShop controls.
     aliases: [zshop]
-    usage: /shopadmin <reload|list|setprice|setslot|give|debug>
+    usage: /shopadmin <reload|list|debug|setprice|setslot|enable|disable|give>
+    permission: zivexshop.admin
 permissions:
   zivexshop.use:
     default: true
