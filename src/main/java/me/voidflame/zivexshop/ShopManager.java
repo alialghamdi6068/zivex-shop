@@ -24,13 +24,15 @@ public final class ShopManager {
     public record Pending(ItemDef item, int quantity) {}
 
     private final ZivexShopPlugin plugin;
+    private final EconomyStore economy;
     private final ShardEconomy shards = new ShardEconomy();
     private final LinkedHashMap<String, Category> categories = new LinkedHashMap<>();
     private final Map<UUID, Pending> pending = new HashMap<>();
     private final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    public ShopManager(ZivexShopPlugin plugin) {
+    public ShopManager(ZivexShopPlugin plugin, EconomyStore economy) {
         this.plugin = plugin;
+        this.economy = economy;
     }
 
     public void reload() {
