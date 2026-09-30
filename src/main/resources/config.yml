@@ -18,7 +18,7 @@ settings:
   editor-price-step-large: 100
 
 economy:
-  storage: "economy.yml"
+  storage: "database.db"
 
 integrations:
   phoenix-crate-lite:
