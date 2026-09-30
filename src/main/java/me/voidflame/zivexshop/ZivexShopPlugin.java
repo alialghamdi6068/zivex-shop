@@ -14,13 +14,15 @@ public final class ZivexShopPlugin extends JavaPlugin {
         economy = new CoreEconomy(this);
         shop = new ShopManager(this, economy);
         shop.reload();
-        Bukkit.getPluginManager().registerEvents(new ShopListener(this, shop), this);
-        ShopCommand command = new ShopCommand(this, shop);
+        ShopAdminGui adminGui = new ShopAdminGui(this, shop);
+        ShopListener listener = new ShopListener(this, shop, adminGui);
+        Bukkit.getPluginManager().registerEvents(listener, this);
+        ShopCommand command = new ShopCommand(this, shop, adminGui);
         PluginCommand shopCommand = getCommand("shop");
         PluginCommand adminCommand = getCommand("shopadmin");
         if (shopCommand != null) { shopCommand.setExecutor(command); shopCommand.setTabCompleter(command); }
         if (adminCommand != null) { adminCommand.setExecutor(command); adminCommand.setTabCompleter(command); }
-        getLogger().info("ZivexShop enabled. Main GUI: 27 slots. Shard economy intentionally disabled.");
+        getLogger().info("ZivexShop enabled. Main GUI: 27 slots. Economy: Core. Shards: ZivexShards.");
     }
 
     public void reloadShop() { reloadConfig(); shop.reload(); }
