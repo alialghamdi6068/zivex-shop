@@ -24,6 +24,7 @@ final class ShopAdminGui {
     }
 
     void open(Player p) {
+        moving.remove(p.getUniqueId());
         if (!plugin.getConfig().getBoolean("settings.editor-enabled", true)) {
             p.sendMessage(plugin.msg("editor-disabled"));
             return;
