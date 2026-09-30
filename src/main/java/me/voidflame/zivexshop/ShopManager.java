@@ -133,6 +133,7 @@ public final class ShopManager {
         int size = normalizedSize(plugin.getConfig().getInt("settings.main-size", 27));
         Inventory inv = Bukkit.createInventory(null, size,
                 color(plugin.getConfig().getString("settings.main-title", "&8Shop")));
+        fillBorder(inv, size, Material.GRAY_STAINED_GLASS_PANE);
         for (Category c : categories.values()) {
             if (c.slot() >= 0 && c.slot() < size)
                 inv.setItem(c.slot(), icon(c.material(), c.name(), c.lore()));
@@ -174,6 +175,7 @@ public final class ShopManager {
         String title = plugin.getConfig().getString("settings.purchase-title", "&8Purchase: {item}")
                 .replace("{item}", ChatText.strip(d.name()));
         Inventory inv = Bukkit.createInventory(null, size, color(title));
+        fillBorder(inv, size, Material.GRAY_STAINED_GLASS_PANE);
 
         double total = d.price() * quantity;
         ItemStack display = icon(d.material(), d.name(), List.of(
