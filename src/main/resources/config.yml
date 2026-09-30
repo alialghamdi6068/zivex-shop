@@ -1,0 +1,110 @@
+settings:
+  main-title: "&8Shop"
+  category-title-format: "&8{category} Shop"
+  purchase-title: "&8Purchase: {item}"
+  main-size: 27
+  category-size: 27
+  purchase-size: 27
+  close-on-purchase: true
+  sounds: true
+  currency-symbol: "$"
+  max-quantity: 64
+  quantity-step: 1
+  refund-on-delivery-failure: true
+
+economy:
+  required: true
+  core-plugin: "VoidFlame-Core"
+  service-getter: "getEconomyService"
+  balance-method: "getBalance"
+  withdraw-method: "withdraw"
+  deposit-method: "deposit"
+
+integrations:
+  phoenix-crate-lite:
+    enabled: true
+    key-command: "crate key give {player} {key} {amount}"
+  smart-spawners:
+    enabled: true
+    spawner-command: "smartspawners give {player} {type} {amount}"
+
+messages:
+  prefix: "&8[&5ZivexShop&8] &r"
+  no-permission: "&cYou don't have permission."
+  player-only: "&cThis command is for players."
+  reloaded: "&aShop configuration reloaded."
+  invalid-item: "&cUnknown shop item."
+  invalid-category: "&cUnknown shop category."
+  duplicate-slot: "&c[Shop] ERROR: Duplicate slot detected: {slot}"
+  no-economy: "&cVoidFlame-Core economy service is unavailable."
+  insufficient: "&cYou need {price} {currency}."
+  purchased: "&aPurchased &f{amount}x {item} &afor &f{total} {currency}&a."
+  delivery-failed: "&cPurchase failed while delivering the item. Your balance was restored."
+
+categories:
+  end:
+    display-name: "&5End"
+    material: END_STONE
+    slot: 11
+    lore: ["&7Click to view the End Shop"]
+    items:
+      ender_chest: {material: ENDER_CHEST, name: "&5Ender Chest", slot: 10, price: 2500, currency: MONEY, delivery: VANILLA, amount: 1}
+      ender_pearl: {material: ENDER_PEARL, name: "&dEnder Pearl", slot: 11, price: 75, currency: MONEY, delivery: VANILLA, amount: 1}
+      end_stone: {material: END_STONE, name: "&fEnd Stone", slot: 12, price: 128, currency: MONEY, delivery: VANILLA, amount: 16}
+      dragon_breath: {material: DRAGON_BREATH, name: "&dDragon Breath", slot: 13, price: 1000, currency: MONEY, delivery: VANILLA, amount: 1}
+      end_rod: {material: END_ROD, name: "&fEnd Rod", slot: 14, price: 100, currency: MONEY, delivery: VANILLA, amount: 1}
+      chorus_fruit: {material: CHORUS_FRUIT, name: "&dChorus Fruit", slot: 15, price: 108, currency: MONEY, delivery: VANILLA, amount: 1}
+      popped_chorus: {material: POPPED_CHORUS_FRUIT, name: "&dPopped Chorus Fruit", slot: 16, price: 24, currency: MONEY, delivery: VANILLA, amount: 1}
+      shulker_shell: {material: SHULKER_SHELL, name: "&5Shulker Shell", slot: 19, price: 350, currency: MONEY, delivery: VANILLA, amount: 1}
+      shulker_box: {material: SHULKER_BOX, name: "&5Shulker Box", slot: 20, price: 800, currency: MONEY, delivery: VANILLA, amount: 1}
+  nether:
+    display-name: "&cNether"
+    material: NETHERRACK
+    slot: 12
+    lore: ["&7Click to view the Nether Shop"]
+    items:
+      blaze_rod: {material: BLAZE_ROD, name: "&6Blaze Rod", slot: 10, price: 150, currency: MONEY, delivery: VANILLA, amount: 1}
+      nether_wart: {material: NETHER_WART, name: "&cNether Wart", slot: 11, price: 96, currency: MONEY, delivery: VANILLA, amount: 1}
+      glowstone_dust: {material: GLOWSTONE_DUST, name: "&eGlowstone Dust", slot: 12, price: 15, currency: MONEY, delivery: VANILLA, amount: 1}
+      magma_cream: {material: MAGMA_CREAM, name: "&6Magma Cream", slot: 13, price: 96, currency: MONEY, delivery: VANILLA, amount: 1}
+      ghast_tear: {material: GHAST_TEAR, name: "&fGhast Tear", slot: 14, price: 350, currency: MONEY, delivery: VANILLA, amount: 1}
+      nether_quartz: {material: QUARTZ, name: "&fNether Quartz", slot: 15, price: 30, currency: MONEY, delivery: VANILLA, amount: 1}
+      soul_sand: {material: SOUL_SAND, name: "&6Soul Sand", slot: 16, price: 50, currency: MONEY, delivery: VANILLA, amount: 1}
+      magma_block: {material: MAGMA_BLOCK, name: "&6Magma Block", slot: 19, price: 35, currency: MONEY, delivery: VANILLA, amount: 1}
+      crying_obsidian: {material: CRYING_OBSIDIAN, name: "&5Crying Obsidian", slot: 20, price: 150, currency: MONEY, delivery: VANILLA, amount: 1}
+  gear:
+    display-name: "&bGear"
+    material: TOTEM_OF_UNDYING
+    slot: 13
+    lore: ["&7Click to view the Gear Shop"]
+    items:
+      obsidian: {material: OBSIDIAN, name: "&8Obsidian", slot: 10, price: 100, currency: MONEY, delivery: VANILLA, amount: 1}
+      end_crystal: {material: END_CRYSTAL, name: "&dEnd Crystal", slot: 11, price: 350, currency: MONEY, delivery: VANILLA, amount: 1}
+      respawn_anchor: {material: RESPAWN_ANCHOR, name: "&5Respawn Anchor", slot: 12, price: 1000, currency: MONEY, delivery: VANILLA, amount: 1}
+      glowstone: {material: GLOWSTONE, name: "&eGlowstone", slot: 13, price: 100, currency: MONEY, delivery: VANILLA, amount: 1}
+      totem: {material: TOTEM_OF_UNDYING, name: "&6Totem of Undying", slot: 14, price: 1500, currency: MONEY, delivery: VANILLA, amount: 1}
+      ender_pearl: {material: ENDER_PEARL, name: "&dEnder Pearl", slot: 15, price: 75, currency: MONEY, delivery: VANILLA, amount: 1}
+      golden_apple: {material: GOLDEN_APPLE, name: "&6Golden Apple", slot: 16, price: 250, currency: MONEY, delivery: VANILLA, amount: 1}
+      xp_bottle: {material: EXPERIENCE_BOTTLE, name: "&aBottle o' Enchanting", slot: 19, price: 100, currency: MONEY, delivery: VANILLA, amount: 1}
+      slow_falling_arrow: {material: TIPPED_ARROW, name: "&fArrow of Slow Falling", slot: 20, price: 500, currency: MONEY, delivery: VANILLA, amount: 1}
+  food:
+    display-name: "&aFood"
+    material: COOKED_BEEF
+    slot: 14
+    lore: ["&7Click to view the Food Shop"]
+    items:
+      potato: {material: POTATO, name: "&ePotato", slot: 10, price: 96, currency: MONEY, delivery: VANILLA, amount: 1}
+      sweet_berries: {material: SWEET_BERRIES, name: "&dSweet Berries", slot: 11, price: 50, currency: MONEY, delivery: VANILLA, amount: 1}
+      melon_slice: {material: MELON_SLICE, name: "&aMelon Slice", slot: 12, price: 36, currency: MONEY, delivery: VANILLA, amount: 1}
+      carrot: {material: CARROT, name: "&6Carrot", slot: 13, price: 96, currency: MONEY, delivery: VANILLA, amount: 1}
+      apple: {material: APPLE, name: "&cApple", slot: 14, price: 25, currency: MONEY, delivery: VANILLA, amount: 1}
+      cooked_chicken: {material: COOKED_CHICKEN, name: "&fCooked Chicken", slot: 15, price: 48, currency: MONEY, delivery: VANILLA, amount: 1}
+      steak: {material: COOKED_BEEF, name: "&6Steak", slot: 16, price: 35, currency: MONEY, delivery: VANILLA, amount: 1}
+      golden_carrot: {material: GOLDEN_CARROT, name: "&6Golden Carrot", slot: 19, price: 120, currency: MONEY, delivery: VANILLA, amount: 1}
+      golden_apple: {material: GOLDEN_APPLE, name: "&6Golden Apple", slot: 20, price: 250, currency: MONEY, delivery: VANILLA, amount: 1}
+  shard_shop:
+    display-name: "&dShard Shop"
+    material: AMETHYST_SHARD
+    slot: 15
+    lore: ["&7Shard economy is provided by the separate shard plugin."]
+    items: {}
