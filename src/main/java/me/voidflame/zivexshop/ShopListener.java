@@ -53,8 +53,12 @@ public final class ShopListener implements Listener {
                 int step = Math.max(1, plugin.getConfig().getInt("settings.quantity-step", 1));
                 int max = Math.max(1, plugin.getConfig().getInt("settings.max-quantity", 64));
 
-                if (slot == 11) shop.openPurchase(p, pd.item(), Math.max(1, q - step));
-                else if (slot == 15) shop.openPurchase(p, pd.item(), Math.min(max, q + step));
+                if (slot == 10) shop.openPurchase(p, pd.item(), Math.max(1, q - 64));
+                else if (slot == 11) shop.openPurchase(p, pd.item(), Math.max(1, q - 16));
+                else if (slot == 12) shop.openPurchase(p, pd.item(), Math.max(1, q - step));
+                else if (slot == 14) shop.openPurchase(p, pd.item(), Math.min(max, q + step));
+                else if (slot == 15) shop.openPurchase(p, pd.item(), Math.min(max, q + 16));
+                else if (slot == 16) shop.openPurchase(p, pd.item(), Math.min(max, q + 64));
                 else if (slot == 21) {
                     boolean success = shop.purchase(p, pd);
                     shop.clearPending(p);
