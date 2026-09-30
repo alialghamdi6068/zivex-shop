@@ -18,12 +18,7 @@ settings:
   editor-price-step-large: 100
 
 economy:
-  required: true
-  core-plugin: "VoidFlame-Core"
-  service-getter: "getEconomyService"
-  balance-method: "getBalance"
-  withdraw-method: "withdraw"
-  deposit-method: "deposit"
+  storage: "economy.yml"
 
 integrations:
   phoenix-crate-lite:
@@ -64,7 +59,7 @@ messages:
   invalid-item: "&cUnknown shop item."
   invalid-category: "&cUnknown shop category."
   duplicate-slot: "&c[Shop] ERROR: Duplicate slot detected: {slot}"
-  no-economy: "&cVoidFlame-Core economy service is unavailable."
+  no-economy: "&cThe built-in economy is unavailable right now."
   no-shard-economy: "&cZivexShards is unavailable right now. Please try again shortly."
   invalid-shard-price: "&cThis Shards price is invalid."
   unsupported-currency: "&cUnsupported shop currency: {currency}."
@@ -77,7 +72,7 @@ messages:
   invalid-amount: "&cThe purchase amount is invalid."
   invalid-price: "&cThis item has an invalid price."
   player-usage: "&cUsage: /shop"
-  admin-usage: "&cUsage: /shopadmin <gui|reload|list|debug|setprice|setslot|enable|disable|give>"
+  admin-usage: "&cUsage: /shopadmin <gui|reload|list|debug|setprice|setslot|enable|disable|give|money>"
   price-updated: "&aPrice updated."
   slot-updated: "&aSlot updated."
   item-updated: "&aItem updated."
