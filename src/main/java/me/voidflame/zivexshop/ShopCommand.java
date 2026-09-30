@@ -8,8 +8,9 @@ import java.util.*;
 public final class ShopCommand implements CommandExecutor, TabCompleter {
     private final ZivexShopPlugin plugin;
     private final ShopManager shop;
+    private final ShopAdminGui adminGui;
 
-    public ShopCommand(ZivexShopPlugin plugin, ShopManager shop) { this.plugin = plugin; this.shop = shop; }
+    public ShopCommand(ZivexShopPlugin plugin, ShopManager shop, ShopAdminGui adminGui) { this.plugin = plugin; this.shop = shop; this.adminGui = adminGui; }
 
     private boolean admin(CommandSender sender) {
         if (sender.hasPermission("zivexshop.admin")) return true;
@@ -33,7 +34,7 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
 
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
-            case "reload" -> {
+            case "gui" -> {\n                if (sender instanceof Player p) adminGui.open(p); else sender.sendMessage(plugin.msg("player-only"));\n            }\n            case "reload" -> {
                 plugin.reloadShop();
                 sender.sendMessage(plugin.msg("reloaded"));
             }
@@ -109,7 +110,7 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
 
     @Override public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] a) {
         if (!command.getName().equalsIgnoreCase("shopadmin") || !sender.hasPermission("zivexshop.admin")) return List.of();
-        if (a.length == 1) return List.of("reload","list","debug","setprice","setslot","enable","disable","give");
+        if (a.length == 1) return List.of("gui","reload","list","debug","setprice","setslot","enable","disable","give");
         if (a.length == 2 && a[0].equalsIgnoreCase("give")) return Bukkit.getOnlinePlayers().stream().map(Player::getName).sorted().toList();
         if ((a[0].equalsIgnoreCase("give") || a[0].equalsIgnoreCase("setprice") || a[0].equalsIgnoreCase("setslot")
                 || a[0].equalsIgnoreCase("enable") || a[0].equalsIgnoreCase("disable")) && a.length == 2)
