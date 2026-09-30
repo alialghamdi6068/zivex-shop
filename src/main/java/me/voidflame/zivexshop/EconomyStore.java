@@ -1,57 +1,72 @@
 package me.voidflame.zivexshop;
 
-import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
-import java.io.IOException;
+import java.sql.*;
 import java.util.UUID;
 
 public final class EconomyStore {
     private final ZivexShopPlugin plugin;
     private final File file;
-    private YamlConfiguration data;
+    private Connection connection;
 
     public EconomyStore(ZivexShopPlugin plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), "economy.yml");
-        load();
+        this.file = new File(plugin.getDataFolder(), "database.db");
+        open();
+    }
+
+    private synchronized void open() {
+        try {
+            if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
+            connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+            try (Statement s = connection.createStatement()) {
+                s.execute("PRAGMA journal_mode=WAL");
+                s.execute("PRAGMA foreign_keys=ON");
+                s.execute("PRAGMA busy_timeout=5000");
+                s.execute("CREATE TABLE IF NOT EXISTS economy (uuid TEXT PRIMARY KEY, balance REAL NOT NULL DEFAULT 0 CHECK(balance >= 0))");
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Could not open ZivexShop SQLite database", e);
+        }
     }
 
     public synchronized void load() {
-        if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
-        data = YamlConfiguration.loadConfiguration(file);
+        if (connection == null) open();
     }
 
     public synchronized double balance(UUID uuid) {
-        return Math.max(0D, data.getDouble("balances." + uuid, 0D));
+        try (PreparedStatement ps = connection.prepareStatement("SELECT balance FROM economy WHERE uuid=?")) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) { return rs.next() ? Math.max(0D, rs.getDouble(1)) : 0D; }
+        } catch (SQLException e) { plugin.getLogger().severe("Economy read failed: " + e.getMessage()); return -1D; }
     }
 
     public synchronized boolean withdraw(UUID uuid, double amount) {
-        if (!Double.isFinite(amount) || amount < 0) return false;
-        double current = balance(uuid);
-        if (current < amount) return false;
-        data.set("balances." + uuid, current - amount);
-        return save();
+        if (!valid(amount)) return false;
+        try (PreparedStatement ps = connection.prepareStatement("UPDATE economy SET balance=balance-? WHERE uuid=? AND balance>=?")) {
+            ps.setDouble(1, amount); ps.setString(2, uuid.toString()); ps.setDouble(3, amount);
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) { plugin.getLogger().severe("Economy withdraw failed: " + e.getMessage()); return false; }
     }
 
     public synchronized boolean deposit(UUID uuid, double amount) {
-        if (!Double.isFinite(amount) || amount < 0) return false;
-        double next = balance(uuid) + amount;
-        if (!Double.isFinite(next)) return false;
-        data.set("balances." + uuid, next);
-        return save();
+        if (!valid(amount)) return false;
+        try (PreparedStatement ps = connection.prepareStatement("INSERT INTO economy(uuid,balance) VALUES(?,?) ON CONFLICT(uuid) DO UPDATE SET balance=balance+excluded.balance")) {
+            ps.setString(1, uuid.toString()); ps.setDouble(2, amount); return ps.executeUpdate() == 1;
+        } catch (SQLException e) { plugin.getLogger().severe("Economy deposit failed: " + e.getMessage()); return false; }
     }
 
     public synchronized boolean set(UUID uuid, double amount) {
-        if (!Double.isFinite(amount) || amount < 0) return false;
-        data.set("balances." + uuid, amount);
-        return save();
+        if (!valid(amount)) return false;
+        try (PreparedStatement ps = connection.prepareStatement("INSERT INTO economy(uuid,balance) VALUES(?,?) ON CONFLICT(uuid) DO UPDATE SET balance=excluded.balance")) {
+            ps.setString(1, uuid.toString()); ps.setDouble(2, amount); return ps.executeUpdate() == 1;
+        } catch (SQLException e) { plugin.getLogger().severe("Economy set failed: " + e.getMessage()); return false; }
     }
 
-    private boolean save() {
-        try { data.save(file); return true; }
-        catch (IOException e) {
-            plugin.getLogger().severe("Failed to save economy.yml: " + e.getMessage());
-            return false;
-        }
+    public synchronized void close() {
+        try { if (connection != null && !connection.isClosed()) connection.close(); }
+        catch (SQLException e) { plugin.getLogger().warning("Failed to close economy database: " + e.getMessage()); }
     }
+
+    private boolean valid(double amount) { return Double.isFinite(amount) && amount >= 0D; }
 }
