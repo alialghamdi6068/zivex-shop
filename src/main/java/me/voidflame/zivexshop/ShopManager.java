@@ -20,7 +20,7 @@ public final class ShopManager {
     public record Pending(ItemDef item, int quantity) {}
 
     private final ZivexShopPlugin plugin;
-    private final CoreEconomy economy;
+    private final CoreEconomy economy;\n    private final ShardEconomy shards = new ShardEconomy();
     private final LinkedHashMap<String, Category> categories = new LinkedHashMap<>();
     private final Map<UUID, Pending> pending = new HashMap<>();
 
