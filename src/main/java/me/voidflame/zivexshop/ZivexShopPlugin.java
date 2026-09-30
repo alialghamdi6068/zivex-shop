@@ -25,7 +25,8 @@ public final class ZivexShopPlugin extends JavaPlugin {
         getLogger().info("ZivexShop enabled. Main GUI: 27 slots. Economy: Built-in. Shards: ZivexShards.");
     }
 
-    public void reloadShop() { reloadConfig(); shop.reload(); }
+    @Override public void onDisable() { if (economy != null) economy.close(); }
+    public void reloadShop() { reloadConfig(); economy.load(); shop.reload(); }
     public ShopManager shop() { return shop; }
     public String msg(String key) { return color(getConfig().getString("messages." + key, key)); }
     public static String color(String s) { return ChatColor.translateAlternateColorCodes('&', s == null ? "" : s); }
