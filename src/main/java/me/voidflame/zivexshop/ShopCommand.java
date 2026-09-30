@@ -5,26 +5,120 @@ import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import java.util.*;
 
-public final class ShopCommand implements CommandExecutor,TabCompleter{
-    private final ZivexShopPlugin plugin;private final ShopManager shop;
-    public ShopCommand(ZivexShopPlugin p,ShopManager s){plugin=p;shop=s;}
-    private boolean admin(CommandSender s){if(s.hasPermission("zivexshop.admin"))return true;s.sendMessage(plugin.msg("no-permission"));return false;}
-    @Override public boolean onCommand(CommandSender s,Command c,String l,String[] a){
-        if(a.length==0){if(!(s instanceof Player p)){s.sendMessage(plugin.msg("player-only"));return true;}if(!p.hasPermission("zivexshop.use")){s.sendMessage(plugin.msg("no-permission"));return true;}shop.openMain(p);return true;}
-        String sub=a[0].toLowerCase(Locale.ROOT);
-        if(sub.equals("reload")){if(!admin(s))return true;plugin.reloadShop();s.sendMessage(plugin.msg("reloaded"));return true;}
-        if(sub.equals("list")){if(!admin(s))return true;for(ShopManager.Category cat:shop.categories()){s.sendMessage(ZivexShopPlugin.color("&d"+cat.id()+" &7(slot "+cat.slot()+")"));for(ShopManager.ItemDef d:cat.items().values())s.sendMessage(ZivexShopPlugin.color(" &8- &f"+d.id()+" &7slot="+d.slot()+" price="+d.price()+" delivery="+d.delivery()));}return true;}
-        if(sub.equals("debug")){if(!admin(s))return true;s.sendMessage(ZivexShopPlugin.color("&dZivexShop &7categories="+shop.categories().size()+" core="+plugin.getServer().getPluginManager().isPluginEnabled("VoidFlame-Core")));return true;}
-        if(sub.equals("setprice")&&a.length>=4){if(!admin(s))return true;try{double v=Double.parseDouble(a[3]);if(!Double.isFinite(v)||v<0){s.sendMessage("§cInvalid price.");return true;}s.sendMessage(shop.setPrice(a[1],a[2],v)?"§aPrice updated.":plugin.msg("invalid-item"));}catch(NumberFormatException e){s.sendMessage("§cInvalid price.");}return true;}
-        if(sub.equals("setslot")&&a.length>=4){if(!admin(s))return true;try{int v=Integer.parseInt(a[3]);if(v<0||v>=54){s.sendMessage("§cInvalid slot.");return true;}s.sendMessage(shop.setSlot(a[1],a[2],v)?"§aSlot updated.":plugin.msg("invalid-item"));}catch(NumberFormatException e){s.sendMessage("§cInvalid slot.");}return true;}
-        if(sub.equals("give")&&a.length>=4){if(!admin(s))return true;Player target=Bukkit.getPlayerExact(a[1]);if(target==null){s.sendMessage("§cPlayer not found.");return true;}ShopManager.ItemDef d=shop.item(a[2],a[3]);if(d==null){s.sendMessage(plugin.msg("invalid-item"));return true;}int amount=1;try{amount=a.length>=5?Math.max(1,Integer.parseInt(a[4])):1;}catch(NumberFormatException e){s.sendMessage("§cInvalid amount.");return true;}shop.give(target,d,amount);s.sendMessage("§aDelivered.");return true;}
-        if(s instanceof Player p)shop.openMain(p);else s.sendMessage(plugin.msg("player-only"));return true;
+public final class ShopCommand implements CommandExecutor, TabCompleter {
+    private final ZivexShopPlugin plugin;
+    private final ShopManager shop;
+
+    public ShopCommand(ZivexShopPlugin plugin, ShopManager shop) { this.plugin = plugin; this.shop = shop; }
+
+    private boolean admin(CommandSender sender) {
+        if (sender.hasPermission("zivexshop.admin")) return true;
+        sender.sendMessage(plugin.msg("no-permission"));
+        return false;
     }
-    @Override public List<String> onTabComplete(CommandSender s,Command c,String l,String[] a){
-        if(a.length==1)return List.of("reload","list","give","setprice","setslot","debug");
-        if(a[0].equalsIgnoreCase("give")&&a.length==2)return Bukkit.getOnlinePlayers().stream().map(Player::getName).sorted().toList();
-        if((a[0].equalsIgnoreCase("give")||a[0].equalsIgnoreCase("setprice")||a[0].equalsIgnoreCase("setslot"))&&a.length==3)return shop.categories().stream().map(ShopManager.Category::id).toList();
-        if((a[0].equalsIgnoreCase("give")||a[0].equalsIgnoreCase("setprice")||a[0].equalsIgnoreCase("setslot"))&&a.length==4&&shop.category(a[2])!=null)return shop.category(a[2]).items().keySet().stream().sorted().toList();
+
+    @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        boolean adminCommand = command.getName().equalsIgnoreCase("shopadmin");
+
+        if (!adminCommand) {
+            if (!(sender instanceof Player p)) { sender.sendMessage(plugin.msg("player-only")); return true; }
+            if (!p.hasPermission("zivexshop.use")) { sender.sendMessage(plugin.msg("no-permission")); return true; }
+            if (args.length > 0) { p.sendMessage(plugin.msg("player-usage")); return true; }
+            shop.openMain(p);
+            return true;
+        }
+
+        if (!admin(sender)) return true;
+        if (args.length == 0) { sender.sendMessage(plugin.msg("admin-usage")); return true; }
+
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        switch (sub) {
+            case "reload" -> {
+                plugin.reloadShop();
+                sender.sendMessage(plugin.msg("reloaded"));
+            }
+            case "list" -> list(sender);
+            case "debug" -> debug(sender);
+            case "setprice" -> setPrice(sender, args);
+            case "setslot" -> setSlot(sender, args);
+            case "enable", "disable" -> setEnabled(sender, args, sub.equals("enable"));
+            case "give" -> give(sender, args);
+            default -> sender.sendMessage(plugin.msg("admin-usage"));
+        }
+        return true;
+    }
+
+    private void list(CommandSender sender) {
+        for (ShopManager.Category cat : shop.categories()) {
+            sender.sendMessage(ZivexShopPlugin.color("&d" + cat.id() + " &7(slot " + cat.slot() + ")"));
+            for (ShopManager.ItemDef d : cat.items().values())
+                sender.sendMessage(ZivexShopPlugin.color(" &8- &f" + d.id() + " &7slot=" + d.slot()
+                        + " price=" + d.price() + " currency=" + d.currency()
+                        + " delivery=" + d.delivery() + " enabled=" + d.enabled()));
+        }
+    }
+
+    private void debug(CommandSender sender) {
+        sender.sendMessage(ZivexShopPlugin.color("&dZivexShop &7categories=" + shop.categories().size()
+                + " core=" + plugin.getServer().getPluginManager().isPluginEnabled("VoidFlame-Core")
+                + " shards=" + plugin.getServer().getPluginManager().isPluginEnabled("ZivexShards")));
+    }
+
+    private void setPrice(CommandSender sender, String[] a) {
+        if (a.length < 4) { sender.sendMessage(plugin.msg("admin-usage")); return; }
+        try {
+            double price = Double.parseDouble(a[3]);
+            if (!Double.isFinite(price) || price < 0) throw new NumberFormatException();
+            sender.sendMessage(shop.setPrice(a[1], a[2], price) ? plugin.msg("price-updated") : plugin.msg("invalid-item"));
+        } catch (NumberFormatException e) { sender.sendMessage(plugin.msg("invalid-price")); }
+    }
+
+    private void setSlot(CommandSender sender, String[] a) {
+        if (a.length < 4) { sender.sendMessage(plugin.msg("admin-usage")); return; }
+        try {
+            int slot = Integer.parseInt(a[3]);
+            sender.sendMessage(shop.setSlot(a[1], a[2], slot) ? plugin.msg("slot-updated") : plugin.msg("invalid-slot"));
+        } catch (NumberFormatException e) { sender.sendMessage(plugin.msg("invalid-slot")); }
+    }
+
+    private void setEnabled(CommandSender sender, String[] a, boolean enabled) {
+        if (a.length < 3) { sender.sendMessage(plugin.msg("admin-usage")); return; }
+        sender.sendMessage(shop.setEnabled(a[1], a[2], enabled) ? plugin.msg("item-updated") : plugin.msg("invalid-item"));
+    }
+
+    private void give(CommandSender sender, String[] a) {
+        if (a.length < 4) { sender.sendMessage(plugin.msg("admin-usage")); return; }
+        Player target = Bukkit.getPlayerExact(a[1]);
+        if (target == null) { sender.sendMessage(plugin.msg("player-not-found")); return; }
+        ShopManager.ItemDef d = shop.item(a[2], a[3]);
+        if (d == null) { sender.sendMessage(plugin.msg("invalid-item")); return; }
+
+        int amount = 1;
+        if (a.length >= 5) {
+            try { amount = Math.max(1, Integer.parseInt(a[4])); }
+            catch (NumberFormatException e) { sender.sendMessage(plugin.msg("invalid-number")); return; }
+        }
+
+        if (!shop.give(target, d, amount)) {
+            sender.sendMessage(plugin.msg("delivery-failed"));
+            return;
+        }
+        sender.sendMessage(plugin.msg("delivered").replace("{amount}", String.valueOf(amount))
+                .replace("{item}", ShopManager.ChatText.strip(d.name())).replace("{player}", target.getName()));
+    }
+
+    @Override public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] a) {
+        if (!command.getName().equalsIgnoreCase("shopadmin") || !sender.hasPermission("zivexshop.admin")) return List.of();
+        if (a.length == 1) return List.of("reload","list","debug","setprice","setslot","enable","disable","give");
+        if (a.length == 2 && a[0].equalsIgnoreCase("give")) return Bukkit.getOnlinePlayers().stream().map(Player::getName).sorted().toList();
+        if ((a[0].equalsIgnoreCase("give") || a[0].equalsIgnoreCase("setprice") || a[0].equalsIgnoreCase("setslot")
+                || a[0].equalsIgnoreCase("enable") || a[0].equalsIgnoreCase("disable")) && a.length == 2)
+            return shop.categories().stream().map(ShopManager.Category::id).sorted().toList();
+        if ((a[0].equalsIgnoreCase("give") || a[0].equalsIgnoreCase("setprice") || a[0].equalsIgnoreCase("setslot")
+                || a[0].equalsIgnoreCase("enable") || a[0].equalsIgnoreCase("disable")) && a.length == 3
+                && shop.category(a[1]) != null)
+            return shop.category(a[1]).items().keySet().stream().sorted().toList();
+        if (a[0].equalsIgnoreCase("give") && a.length == 4) return List.of("1","16","32","64");
         return List.of();
     }
 }
