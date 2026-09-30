@@ -34,7 +34,10 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
 
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
-            case "gui" -> {\n                if (sender instanceof Player p) adminGui.open(p); else sender.sendMessage(plugin.msg("player-only"));\n            }\n            case "reload" -> {
+            case "gui" -> {
+                if (sender instanceof Player p) adminGui.open(p); else sender.sendMessage(plugin.msg("player-only"));
+            }
+            case "reload" -> {
                 plugin.reloadShop();
                 sender.sendMessage(plugin.msg("reloaded"));
             }
