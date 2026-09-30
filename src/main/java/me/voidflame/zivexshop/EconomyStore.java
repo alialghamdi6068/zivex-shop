@@ -11,7 +11,7 @@ public final class EconomyStore {
 
     public EconomyStore(ZivexShopPlugin plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), "database.db");
+        this.file = new File(plugin.getDataFolder(), plugin.getConfig().getString("settings.database-file", "database.db"));
         open();
     }
 
@@ -20,7 +20,7 @@ public final class EconomyStore {
             if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
             connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
             try (Statement s = connection.createStatement()) {
-                s.execute("PRAGMA journal_mode=WAL");
+                s.execute("PRAGMA journal_mode=DELETE");
                 s.execute("PRAGMA foreign_keys=ON");
                 s.execute("PRAGMA busy_timeout=5000");
                 s.execute("CREATE TABLE IF NOT EXISTS economy (uuid TEXT PRIMARY KEY, balance REAL NOT NULL DEFAULT 0 CHECK(balance >= 0))");
