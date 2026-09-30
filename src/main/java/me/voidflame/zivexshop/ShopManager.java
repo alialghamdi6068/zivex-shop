@@ -150,12 +150,13 @@ public final class ShopManager {
                 .replace("{category}", ChatText.strip(c.name()));
         Inventory inv = Bukkit.createInventory(null, size, color(title));
 
+        fillBorder(inv, size, Material.GRAY_STAINED_GLASS_PANE);
         for (ItemDef d : c.items().values()) {
             if (!d.enabled()) continue;
             inv.setItem(d.slot(), icon(d.material(), d.name(), loreFor(d)));
         }
 
-        int backSlot = plugin.getConfig().getInt("settings.back-slot", 22);
+        int backSlot = plugin.getConfig().getInt("settings.back-slot", 18);
         if (backSlot >= 0 && backSlot < size)
             inv.setItem(backSlot, icon(Material.ARROW, "&cBack", List.of("&7Return to the main shop")));
 
@@ -175,16 +176,25 @@ public final class ShopManager {
         Inventory inv = Bukkit.createInventory(null, size, color(title));
 
         double total = d.price() * quantity;
-        inv.setItem(13, icon(d.material(), d.name(), List.of(
+        ItemStack display = icon(d.material(), d.name(), List.of(
                 "&7Unit price: &f" + money(d.price(), d.currency()),
                 "&7Quantity: &f" + quantity,
+                "&7Stack size: &f" + d.material().getMaxStackSize(),
                 "&7Total: &f" + money(total, d.currency()),
-                "&7Balance: &f" + balanceText(p, d.currency())
-        )));
-        inv.setItem(11, icon(Material.RED_DYE, "&c-1", List.of("&7Decrease quantity")));
-        inv.setItem(15, icon(Material.LIME_DYE, "&a+1", List.of("&7Increase quantity")));
-        inv.setItem(21, icon(Material.GREEN_WOOL, "&aConfirm", List.of("&7Purchase now")));
-        inv.setItem(23, icon(Material.RED_WOOL, "&cCancel", List.of("&7Return to shop")));
+                "&7Balance: &f" + balanceText(p, d.currency()),
+                "&eYour selected quantity is shown on the item."
+        ));
+        display.setAmount(Math.min(quantity, Math.max(1, display.getMaxStackSize())));
+        inv.setItem(13, display);
+
+        inv.setItem(10, icon(Material.REDSTONE_BLOCK, "&c-64", List.of("&7Remove 64")));
+        inv.setItem(11, icon(Material.RED_DYE, "&c-16", List.of("&7Remove 16")));
+        inv.setItem(12, icon(Material.RED_WOOL, "&c-1", List.of("&7Remove 1")));
+        inv.setItem(14, icon(Material.LIME_WOOL, "&a+1", List.of("&7Add 1")));
+        inv.setItem(15, icon(Material.LIME_DYE, "&a+16", List.of("&7Add 16")));
+        inv.setItem(16, icon(Material.EMERALD_BLOCK, "&a+64", List.of("&7Add 64")));
+        inv.setItem(21, icon(Material.GREEN_WOOL, "&aConfirm", List.of("&7Purchase the selected quantity")));
+        inv.setItem(23, icon(Material.RED_WOOL, "&cCancel", List.of("&7Return to the shop")));
 
         p.openInventory(inv);
         sound(p, "purchase");
@@ -221,6 +231,12 @@ public final class ShopManager {
 
     private String trim(double n) {
         return Math.rint(n) == n ? String.format(Locale.US, "%,.0f", n) : String.format(Locale.US, "%,.2f", n);
+    }
+
+    private void fillBorder(Inventory inventory, int size, Material material) {
+        int[] slots = {0,1,2,3,4,5,6,7,8,9,17,18,24,25,26};
+        ItemStack filler = icon(material, " ", List.of());
+        for (int slot : slots) if (slot < size && inventory.getItem(slot) == null) inventory.setItem(slot, filler.clone());
     }
 
     private ItemStack icon(Material m, String name, List<String> lore) {
@@ -413,7 +429,7 @@ public final class ShopManager {
         Category c = category(cat);
         if (c == null || item(cat, id) == null || slot < 0 || slot >= size) return false;
         for (ItemDef other : c.items().values())
-            if (!other.id().equalsIgnoreCase(id) && other.enabled() && other.slot() == slot) return false;
+            if (!other.id().equalsIgnoreCase(id) && other.slot() == slot) return false;
         plugin.getConfig().set("categories." + cat + ".items." + id + ".slot", slot);
         plugin.saveConfig(); reload(); return true;
     }
