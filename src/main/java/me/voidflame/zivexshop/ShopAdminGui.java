@@ -30,6 +30,7 @@ final class ShopAdminGui {
             return;
         }
         Inventory inv = Bukkit.createInventory(null, 27, color(MAIN));
+        fillBorder(inv, new int[]{0,1,2,3,4,5,6,7,8,9,10,16,17,19,20,21,23,24,25,26});
         for (ShopManager.Category c : shop.categories())
             if (c.slot() >= 0 && c.slot() < 27) inv.setItem(c.slot(), icon(c.material(), c.name(), c.lore()));
         inv.setItem(18, icon(Material.COMPASS, "&dReload Config", List.of("&7Reload the shop configuration")));
@@ -38,22 +39,24 @@ final class ShopAdminGui {
     }
 
     void openCategory(Player p, ShopManager.Category c) {
-        Inventory inv = Bukkit.createInventory(null, 54, color(CATEGORY.replace("{category}", ShopManager.ChatText.strip(c.name()))));
+        Inventory inv = Bukkit.createInventory(null, 27, color(CATEGORY.replace("{category}", ShopManager.ChatText.strip(c.name()))));
+        fillBorder(inv, new int[]{0,1,2,3,4,5,6,7,8,9,17,18,24,25,26});
         for (ShopManager.ItemDef d : c.items().values()) {
-            if (d.slot() >= 0 && d.slot() < 54)
+            if (d.slot() >= 0 && d.slot() < 27)
                 inv.setItem(d.slot(), icon(d.material(), d.name(), List.of(
                         "&7Price: &f" + price(d),
                         "&7Enabled: " + (d.enabled() ? "&aYes" : "&cNo"),
                         "&eClick to edit"
                 )));
         }
-        inv.setItem(49, icon(Material.ARROW, "&cBack", List.of("&7Back to admin")));
+        inv.setItem(18, icon(Material.ARROW, "&cBack", List.of("&7Back to admin")));
         p.openInventory(inv);
     }
 
     void openItem(Player p, ShopManager.ItemDef d) {
         Inventory inv = Bukkit.createInventory(null, 27,
                 color(ITEM.replace("{item}", ShopManager.ChatText.strip(d.name()))));
+        fillBorder(inv, new int[]{0,1,2,3,4,5,6,7,8,9,17,18,19,21,23,25,26});
         inv.setItem(4, icon(d.material(), d.name(), List.of(
                 "&7Price: &f" + price(d),
                 "&7Slot: &f" + d.slot(),
@@ -89,11 +92,18 @@ final class ShopAdminGui {
             String ct = color(CATEGORY.replace("{category}", ShopManager.ChatText.strip(c.name())));
             if (!title.equals(ct)) continue;
 
-            if (slot == 49) { open(p); return true; }
+            if (slot == 18) { open(p); return true; }
 
-            String movingId = moving.get(p.getUniqueId());
-            if (movingId != null) {
-                if (slot >= 0 && slot < 54 && shop.setSlot(c.id(), movingId, slot)) {
+            String movingKey = moving.get(p.getUniqueId());
+            if (movingKey != null) {
+                String[] parts = movingKey.split(":", 2);
+                String sourceCategory = parts[0];
+                String movingId = parts.length == 2 ? parts[1] : "";
+                if (!c.id().equalsIgnoreCase(sourceCategory)) {
+                    p.sendMessage(plugin.msg("invalid-slot"));
+                    return true;
+                }
+                if (slot >= 0 && slot < 27 && shop.setSlot(c.id(), movingId, slot)) {
                     moving.remove(p.getUniqueId());
                     openCategory(p, shop.category(c.id()));
                     p.sendMessage(plugin.msg("slot-updated"));
@@ -125,7 +135,7 @@ final class ShopAdminGui {
                         openItem(p, shop.item(d.category(), d.id()));
                     }
                     case 20 -> {
-                        moving.put(p.getUniqueId(), d.id());
+                        moving.put(p.getUniqueId(), c.id() + ":" + d.id());
                         openCategory(p, c);
                         p.sendMessage(plugin.msg("move-item"));
                     }
@@ -158,6 +168,13 @@ final class ShopAdminGui {
         if ("MONEY".equalsIgnoreCase(d.currency()))
             return plugin.getConfig().getString("settings.currency-symbol", "$") + String.format(Locale.US, "%,.2f", d.price());
         return String.format(Locale.US, "%,.0f", d.price()) + " " + plugin.getConfig().getString("settings.shard-currency-name", "Shards");
+    }
+
+    private void fillBorder(Inventory inventory, int[] slots) {
+        ItemStack filler = icon(Material.GRAY_STAINED_GLASS_PANE, " ", List.of());
+        for (int slot : slots) if (slot >= 0 && slot < inventory.getSize() && inventory.getItem(slot) == null) {
+            inventory.setItem(slot, filler.clone());
+        }
     }
 
     private ItemStack icon(Material m, String name, List<String> lore) {
