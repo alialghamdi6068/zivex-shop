@@ -11,13 +11,14 @@ public final class EconomyStore {
 
     public EconomyStore(ZivexShopPlugin plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), plugin.getConfig().getString("settings.database-file", "database.db"));
+        this.file = new File(plugin.getDataFolder(), plugin.getConfig().getString("settings.database-file", "../Zivex/database.db"));
         open();
     }
 
     private synchronized void open() {
         try {
-            if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
+            File parent = file.getParentFile();
+            if (parent != null && !parent.exists() && !parent.mkdirs()) throw new SQLException("Could not create database directory");
             connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
             try (Statement s = connection.createStatement()) {
                 s.execute("PRAGMA journal_mode=DELETE");
