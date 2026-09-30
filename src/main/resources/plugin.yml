@@ -1,0 +1,21 @@
+name: ZivexShop
+version: 1.0.0
+main: me.voidflame.zivexshop.ZivexShopPlugin
+api-version: '26.2'
+author: VoidFlame
+website: https://github.com/alialghamdi6068/zivex-shop
+description: Configurable VoidFlameMC shop with Core economy integration and crate/spawner delivery bridges.
+commands:
+  shop:
+    description: Open the Zivex shop.
+    aliases: [zivexshop]
+    usage: /shop [reload|list|give|setprice|setslot]
+  shopadmin:
+    description: Administrative ZivexShop controls.
+    aliases: [zshop]
+    usage: /shopadmin <reload|list|setprice|setslot|give|debug>
+permissions:
+  zivexshop.use:
+    default: true
+  zivexshop.admin:
+    default: op
