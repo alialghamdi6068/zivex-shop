@@ -18,6 +18,7 @@ final class ShopAdminGui {
     private final ShopManager shop;
     private final Map<UUID, String> moving = new HashMap<>();
     private final Set<UUID> suppressCloseClear = new HashSet<>();
+    private final Set<UUID> deleteConfirm = new HashSet<>();
 
     ShopAdminGui(ZivexShopPlugin plugin, ShopManager shop) {
         this.plugin = plugin;
@@ -26,6 +27,7 @@ final class ShopAdminGui {
 
     void open(Player p) {
         moving.remove(p.getUniqueId());
+        deleteConfirm.remove(p.getUniqueId());
         if (!plugin.getConfig().getBoolean("settings.editor-enabled", true)) {
             p.sendMessage(plugin.msg("editor-disabled"));
             return;
@@ -40,8 +42,9 @@ final class ShopAdminGui {
     }
 
     void openCategory(Player p, ShopManager.Category c) {
+        deleteConfirm.remove(p.getUniqueId());
         Inventory inv = Bukkit.createInventory(null, 27, color(CATEGORY.replace("{category}", ShopManager.ChatText.strip(c.name()))));
-        fillBorder(inv, new int[]{0,1,2,3,4,5,6,7,8,9,17,18,24,25,26});
+        fillBorder(inv, new int[]{0,1,2,3,4,5,6,7,8,9,17,18,24,25});
         for (ShopManager.ItemDef d : c.items().values()) {
             if (d.slot() >= 0 && d.slot() < 27)
                 inv.setItem(d.slot(), icon(d.material(), d.name(), List.of(
@@ -51,13 +54,16 @@ final class ShopAdminGui {
                 )));
         }
         inv.setItem(18, icon(Material.ARROW, "&cBack", List.of("&7Back to admin")));
+        inv.setItem(26, icon(Material.EMERALD, "&aAdd Item", List.of(
+                "&7Use &f/shopadmin add ... &7to add a configured item"
+        )));
         openInventory(p, inv);
     }
 
     void openItem(Player p, ShopManager.ItemDef d) {
         Inventory inv = Bukkit.createInventory(null, 27,
                 color(ITEM.replace("{item}", ShopManager.ChatText.strip(d.name()))));
-        fillBorder(inv, new int[]{0,1,2,3,4,5,6,7,8,9,17,18,19,21,23,25,26});
+        fillBorder(inv, new int[]{0,1,2,3,4,5,6,7,8,9,17,18,21,23,25,26});
         inv.setItem(4, icon(d.material(), d.name(), List.of(
                 "&7Price: &f" + price(d),
                 "&7Slot: &f" + d.slot(),
@@ -73,7 +79,11 @@ final class ShopAdminGui {
         inv.setItem(13, icon(d.enabled() ? Material.LIME_WOOL : Material.RED_WOOL,
                 d.enabled() ? "&aEnabled" : "&cDisabled",
                 List.of("&7Click to toggle this item")));
-        inv.setItem(20, icon(Material.COMPARATOR, "&eMove Item", List.of("&7Click, then click a slot in the item editor")));
+        boolean confirm = deleteConfirm.contains(p.getUniqueId());
+        inv.setItem(19, icon(confirm ? Material.REDSTONE_BLOCK : Material.TNT,
+                confirm ? "&cConfirm Delete" : "&cDelete Item",
+                List.of(confirm ? "&7Click again to permanently delete" : "&7Delete this shop item")));
+        inv.setItem(20, icon(Material.COMPARATOR, "&eMove Item", List.of("&7Click, then click a slot in the category")));
         inv.setItem(22, icon(Material.ARROW, "&cBack", List.of("&7Back to category")));
         inv.setItem(24, icon(Material.BARRIER, "&cClose", List.of("&7Close the editor")));
         openInventory(p, inv);
@@ -94,6 +104,10 @@ final class ShopAdminGui {
             if (!title.equals(ct)) continue;
 
             if (slot == 18) { open(p); return true; }
+            if (slot == 26) {
+                p.sendMessage(plugin.msg("add-usage"));
+                return true;
+            }
 
             String movingKey = moving.get(p.getUniqueId());
             if (movingKey != null) {
@@ -114,10 +128,8 @@ final class ShopAdminGui {
                 return true;
             }
 
-            if (slot >= 0 && slot < 54) {
-                for (ShopManager.ItemDef d : c.items().values())
-                    if (d.slot() == slot) { openItem(p, d); return true; }
-            }
+            for (ShopManager.ItemDef d : c.items().values())
+                if (d.slot() == slot) { openItem(p, d); return true; }
             return true;
         }
 
@@ -132,15 +144,34 @@ final class ShopAdminGui {
                     case 15 -> changePrice(p, d, small());
                     case 16 -> changePrice(p, d, large());
                     case 13 -> {
+                        deleteConfirm.remove(p.getUniqueId());
                         shop.setEnabled(d.category(), d.id(), !d.enabled());
                         openItem(p, shop.item(d.category(), d.id()));
                     }
+                    case 19 -> {
+                        UUID id = p.getUniqueId();
+                        if (deleteConfirm.remove(id)) {
+                            if (shop.deleteItem(d.category(), d.id())) {
+                                p.sendMessage(plugin.msg("item-deleted")
+                                        .replace("{item}", d.id()).replace("{category}", c.id()));
+                            }
+                            openCategory(p, shop.category(c.id()));
+                        } else {
+                            deleteConfirm.add(id);
+                            openItem(p, d);
+                            p.sendMessage(plugin.msg("delete-confirm"));
+                        }
+                    }
                     case 20 -> {
+                        deleteConfirm.remove(p.getUniqueId());
                         moving.put(p.getUniqueId(), c.id() + ":" + d.id());
                         openCategory(p, c);
                         p.sendMessage(plugin.msg("move-item"));
                     }
-                    case 22 -> openCategory(p, c);
+                    case 22 -> {
+                        deleteConfirm.remove(p.getUniqueId());
+                        openCategory(p, c);
+                    }
                     case 24 -> p.closeInventory();
                     default -> {}
                 }
@@ -150,10 +181,6 @@ final class ShopAdminGui {
         return false;
     }
 
-    /**
-     * Opens another editor view without treating the InventoryCloseEvent from the
-     * previous view as a real editor close. This preserves Move Item state.
-     */
     private void openInventory(Player p, Inventory inv) {
         suppressCloseClear.add(p.getUniqueId());
         p.openInventory(inv);
@@ -167,6 +194,7 @@ final class ShopAdminGui {
         UUID id = p.getUniqueId();
         suppressCloseClear.remove(id);
         moving.remove(id);
+        deleteConfirm.remove(id);
     }
 
     private void changePrice(Player p, ShopManager.ItemDef d, double delta) {
@@ -190,9 +218,8 @@ final class ShopAdminGui {
 
     private void fillBorder(Inventory inventory, int[] slots) {
         ItemStack filler = icon(Material.GRAY_STAINED_GLASS_PANE, " ", List.of());
-        for (int slot : slots) if (slot >= 0 && slot < inventory.getSize() && inventory.getItem(slot) == null) {
+        for (int slot : slots) if (slot >= 0 && slot < inventory.getSize() && inventory.getItem(slot) == null)
             inventory.setItem(slot, filler.clone());
-        }
     }
 
     private ItemStack icon(Material m, String name, List<String> lore) {
