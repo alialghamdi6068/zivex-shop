@@ -115,7 +115,8 @@ public final class ShopListener implements Listener {
 
     @EventHandler
     public void close(InventoryCloseEvent e) {
-        if (e.getPlayer() instanceof Player p) adminGui.clear(p);
+        if (!(e.getPlayer() instanceof Player p)) return;
+        if (adminGui.handleClose(p)) adminGui.clear(p);
     }
 
     private int normalizedSize(int size) {
