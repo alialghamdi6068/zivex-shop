@@ -22,7 +22,7 @@ public final class ZivexShopPlugin extends JavaPlugin {
         PluginCommand adminCommand = getCommand("shopadmin");
         if (shopCommand != null) { shopCommand.setExecutor(command); shopCommand.setTabCompleter(command); }
         if (adminCommand != null) { adminCommand.setExecutor(command); adminCommand.setTabCompleter(command); }
-        getLogger().info("ZivexShop enabled. Main GUI: 27 slots. Economy: Built-in. Shards: ZivexShards.");
+        getLogger().info("ZivexShop enabled. Main GUI: 27 slots. Money=Vault, Shards=ZivexShards.");
     }
 
     @Override public void onDisable() { if (economy != null) economy.close(); }

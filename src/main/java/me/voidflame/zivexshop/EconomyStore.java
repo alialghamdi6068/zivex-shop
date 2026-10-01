@@ -1,99 +1,18 @@
 package me.voidflame.zivexshop;
-
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.RegisteredServiceProvider;
-
 import java.util.UUID;
-
 public final class EconomyStore {
-    private final ZivexShopPlugin plugin;
-    private Economy economy;
-
-    public EconomyStore(ZivexShopPlugin plugin) {
-        this.plugin = plugin;
-        refresh();
-    }
-
-    public synchronized void refresh() {
-        RegisteredServiceProvider<Economy> registration =
-                Bukkit.getServicesManager().getRegistration(Economy.class);
-        economy = registration == null ? null : registration.getProvider();
-        if (economy == null) {
-            plugin.getLogger().warning("Vault Economy provider is unavailable. Money purchases are disabled until a provider is available.");
-        }
-    }
-
-    private Economy provider() {
-        if (economy == null) refresh();
-        return economy;
-    }
-
-    public synchronized double balance(UUID uuid) {
-        Economy provider = provider();
-        if (provider == null) return -1D;
-        try {
-            return Math.max(0D, provider.getBalance(Bukkit.getOfflinePlayer(uuid)));
-        } catch (RuntimeException e) {
-            plugin.getLogger().severe("Vault balance read failed: " + e.getMessage());
-            return -1D;
-        }
-    }
-
-    public synchronized boolean withdraw(UUID uuid, double amount) {
-        if (!valid(amount)) return false;
-        Economy provider = provider();
-        if (provider == null) return false;
-        try {
-            var response = provider.withdrawPlayer(Bukkit.getOfflinePlayer(uuid), amount);
-            return response.transactionSuccess();
-        } catch (RuntimeException e) {
-            plugin.getLogger().severe("Vault withdraw failed: " + e.getMessage());
-            return false;
-        }
-    }
-
-    public synchronized boolean deposit(UUID uuid, double amount) {
-        if (!valid(amount)) return false;
-        Economy provider = provider();
-        if (provider == null) return false;
-        try {
-            var response = provider.depositPlayer(Bukkit.getOfflinePlayer(uuid), amount);
-            return response.transactionSuccess();
-        } catch (RuntimeException e) {
-            plugin.getLogger().severe("Vault deposit failed: " + e.getMessage());
-            return false;
-        }
-    }
-
-    public synchronized boolean set(UUID uuid, double amount) {
-        if (!valid(amount)) return false;
-        Economy provider = provider();
-        if (provider == null) return false;
-        try {
-            double current = provider.getBalance(Bukkit.getOfflinePlayer(uuid));
-            if (!Double.isFinite(current) || current < 0) return false;
-            double delta = amount - current;
-            if (Math.abs(delta) < 0.0000001D) return true;
-            var response = delta > 0
-                    ? provider.depositPlayer(Bukkit.getOfflinePlayer(uuid), delta)
-                    : provider.withdrawPlayer(Bukkit.getOfflinePlayer(uuid), -delta);
-            return response.transactionSuccess();
-        } catch (RuntimeException e) {
-            plugin.getLogger().severe("Vault set failed: " + e.getMessage());
-            return false;
-        }
-    }
-
-    public synchronized void load() {
-        refresh();
-    }
-
-    public synchronized void close() {
-        economy = null;
-    }
-
-    private boolean valid(double amount) {
-        return Double.isFinite(amount) && amount >= 0D;
-    }
+ private final ZivexShopPlugin plugin; private volatile Economy economy;
+ public EconomyStore(ZivexShopPlugin plugin){this.plugin=plugin;refresh();}
+ public synchronized void refresh(){RegisteredServiceProvider<Economy> r=Bukkit.getServicesManager().getRegistration(Economy.class);economy=r==null?null:r.getProvider();if(economy==null)plugin.getLogger().warning("No Vault Economy provider is registered.");else plugin.getLogger().info("Vault Economy provider: "+economy.getName());}
+ private Economy provider(){Economy e=economy;if(e==null){refresh();e=economy;}return e;}
+ public double balance(UUID id){Economy e=provider();if(e==null)return -1D;try{double v=e.getBalance(player(id));return Double.isFinite(v)&&v>=0?v:-1D;}catch(RuntimeException x){plugin.getLogger().warning("Vault balance failed: "+x.getMessage());return -1D;}}
+ public boolean withdraw(UUID id,double amount){if(!valid(amount))return false;Economy e=provider();if(e==null)return false;try{return e.withdrawPlayer(player(id),amount).transactionSuccess();}catch(RuntimeException x){plugin.getLogger().warning("Vault withdraw failed: "+x.getMessage());return false;}}
+ public boolean deposit(UUID id,double amount){if(!valid(amount))return false;Economy e=provider();if(e==null)return false;try{return e.depositPlayer(player(id),amount).transactionSuccess();}catch(RuntimeException x){plugin.getLogger().warning("Vault deposit failed: "+x.getMessage());return false;}}
+ public boolean set(UUID id,double amount){if(!valid(amount))return false;Economy e=provider();if(e==null)return false;try{OfflinePlayer p=player(id);double cur=e.getBalance(p);if(!Double.isFinite(cur)||cur<0)return false;double d=amount-cur;if(Math.abs(d)<1e-7)return true;return d>0?e.depositPlayer(p,d).transactionSuccess():e.withdrawPlayer(p,-d).transactionSuccess();}catch(RuntimeException x){plugin.getLogger().warning("Vault set failed: "+x.getMessage());return false;}}
+ public void load(){refresh();} public void close(){economy=null;}
+ private OfflinePlayer player(UUID id){return Bukkit.getOfflinePlayer(id);} private boolean valid(double a){return Double.isFinite(a)&&a>=0D;}
 }

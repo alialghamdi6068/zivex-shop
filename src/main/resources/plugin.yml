@@ -21,7 +21,7 @@ commands:
   shopadmin:
     description: Administrative ZivexShop controls.
     aliases: [zshop]
-    usage: /shopadmin <gui|reload|list|debug|setprice|setslot|enable|disable|give>
+    usage: /shopadmin <gui|reload|list|debug|setprice|setslot|enable|disable|give|money>
     permission: zivexshop.admin
 permissions:
   zivexshop.use:
