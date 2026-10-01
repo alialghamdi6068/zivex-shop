@@ -319,8 +319,8 @@ public final class ShopManager {
 
             boolean delivered = deliver(p, d, (int) deliveryAmount);
             if (!delivered) {
-                refund(p, d.currency(), total, d, q);
-                p.sendMessage(plugin.msg("delivery-failed"));
+                boolean refunded = refund(p, d.currency(), total, d, q);
+                p.sendMessage(plugin.msg(refunded ? "delivery-failed" : "refund-failed"));
                 sound(p, "fail");
                 return false;
             }
@@ -337,15 +337,26 @@ public final class ShopManager {
         }
     }
 
-    private void refund(Player p, String currency, double total, ItemDef d, int quantity) {
-        if (!plugin.getConfig().getBoolean("settings.refund-on-delivery-failure", true)) return;
+    private boolean refund(Player p, String currency, double total, ItemDef d, int quantity) {
+        if (!plugin.getConfig().getBoolean("settings.refund-on-delivery-failure", true)) return true;
         if ("MONEY".equalsIgnoreCase(currency)) {
-            economy.deposit(p.getUniqueId(), total);
-        } else if ("SHARDS".equalsIgnoreCase(currency)) {
-            long amount = Math.round(d.price() * quantity);
-            if (!shards.deposit(p.getUniqueId(), amount))
-                plugin.getLogger().severe("CRITICAL: failed to refund " + amount + " shards to " + p.getName());
+            boolean ok = economy.deposit(p.getUniqueId(), total);
+            if (!ok) plugin.getLogger().severe("CRITICAL: failed to refund " + total + " money to " + p.getName());
+            return ok;
         }
+        if ("SHARDS".equalsIgnoreCase(currency)) {
+            long amount;
+            try {
+                amount = Math.multiplyExact(Math.round(d.price()), (long) quantity);
+            } catch (ArithmeticException ex) {
+                plugin.getLogger().severe("CRITICAL: shard refund overflow for " + p.getName());
+                return false;
+            }
+            boolean ok = shards.deposit(p.getUniqueId(), amount);
+            if (!ok) plugin.getLogger().severe("CRITICAL: failed to refund " + amount + " shards to " + p.getName());
+            return ok;
+        }
+        return false;
     }
 
     private ItemStack createDeliveryItem(ItemDef d) {
@@ -470,9 +481,10 @@ public final class ShopManager {
     }
 
     public boolean give(Player target, ItemDef d, int quantity) {
-        if (quantity < 1) return false;
+        if (quantity < 1 || quantity > 64) return false;
         long amount;
         try { amount = Math.multiplyExact((long) quantity, d.amount()); } catch (ArithmeticException e) { return false; }
+        if (amount > Integer.MAX_VALUE) return false;
         if ("VANILLA".equalsIgnoreCase(d.delivery()) && !canFit(target, createDeliveryItem(d), amount)) return false;
         return deliver(target, d, (int) amount);
     }

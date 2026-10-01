@@ -95,7 +95,15 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
         if (a.length < 3) { sender.sendMessage(ZivexShopPlugin.color("&cUsage: /shopadmin money <balance|give|take|set> <player> [amount]")); return; }
         Player target = Bukkit.getPlayerExact(a[2]);
         if (target == null) { sender.sendMessage(plugin.msg("player-not-found")); return; }
-        if (a[1].equalsIgnoreCase("balance")) { sender.sendMessage(ZivexShopPlugin.color("&d" + target.getName() + " &7balance: &f$" + shop.money(target))); return; }
+        if (a[1].equalsIgnoreCase("balance")) {
+            double balance = shop.money(target);
+            if (balance < 0) {
+                sender.sendMessage(plugin.msg("no-economy"));
+            } else {
+                sender.sendMessage(ZivexShopPlugin.color("&d" + target.getName() + " &7balance: &f$" + String.format(Locale.US, "%,.2f", balance)));
+            }
+            return;
+        }
         if (a.length < 4) { sender.sendMessage(ZivexShopPlugin.color("&cAmount required.")); return; }
         try {
             double amount = Double.parseDouble(a[3]);

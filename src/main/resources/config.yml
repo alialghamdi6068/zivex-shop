@@ -75,6 +75,7 @@ messages:
   insufficient: "&cYou do not have enough currency for this purchase."
   purchased: "&aPurchased &f{amount}x {item} &afor &f{total}."
   delivery-failed: "&cPurchase failed while delivering the item. Your balance was restored."
+  refund-failed: "&cPurchase delivery failed and the automatic refund also failed. Contact an administrator immediately."
   item-disabled: "&cThis item is currently disabled."
   purchase-processing: "&eYour purchase is already being processed."
   inventory-full: "&cYou do not have enough inventory space for this purchase."

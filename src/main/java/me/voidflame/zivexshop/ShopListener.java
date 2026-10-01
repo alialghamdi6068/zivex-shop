@@ -110,15 +110,39 @@ public final class ShopListener implements Listener {
 
         String main = ZivexShopPlugin.color(plugin.getConfig().getString("settings.main-title", "&8Shop"));
         String purchasePrefix = ZivexShopPlugin.color(plugin.getConfig().getString("settings.purchase-title", "&8Purchase: {item}")).replace("{item}", "");
-        String categorySuffix = " Shop";
-        if (title.equals(main) || title.startsWith(purchasePrefix) || title.endsWith(categorySuffix)) e.setCancelled(true);
+        boolean purchase = title.startsWith(purchasePrefix);
+        boolean category = false;
+        for (ShopManager.Category c : shop.categories()) {
+            String categoryTitle = ZivexShopPlugin.color(
+                    plugin.getConfig().getString("settings.category-title-format", "&8{category} Shop")
+                            .replace("{category}", ShopManager.ChatText.strip(c.name()))
+            );
+            if (title.equals(categoryTitle)) {
+                category = true;
+                break;
+            }
+        }
+        if (title.equals(main) || purchase || category) e.setCancelled(true);
     }
 
     @EventHandler
     public void close(InventoryCloseEvent e) {
-        if (e.getPlayer() instanceof Player p) {
-            shop.clearPending(p);
-            if (adminGui.handleClose(p)) adminGui.clear(p);
+        if (!(e.getPlayer() instanceof Player p)) return;
+
+        String title = e.getView().getTitle();
+        ShopManager.Pending pending = shop.pending(p);
+        if (pending != null) {
+            String purchaseTitle = ZivexShopPlugin.color(
+                    plugin.getConfig().getString("settings.purchase-title", "&8Purchase: {item}")
+                            .replace("{item}", ShopManager.ChatText.strip(pending.item().name()))
+            );
+            if (title.equals(purchaseTitle)) {
+                shop.clearPending(p);
+            }
+        }
+
+        if (adminGui.handleClose(p)) {
+            adminGui.clear(p);
         }
     }
 
