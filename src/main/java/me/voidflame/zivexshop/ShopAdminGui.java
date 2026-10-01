@@ -51,7 +51,7 @@ final class ShopAdminGui {
                 )));
         }
         inv.setItem(18, icon(Material.ARROW, "&cBack", List.of("&7Back to admin")));
-        p.openInventory(inv);
+        openInventory(p, inv);
     }
 
     void openItem(Player p, ShopManager.ItemDef d) {
@@ -76,7 +76,7 @@ final class ShopAdminGui {
         inv.setItem(20, icon(Material.COMPARATOR, "&eMove Item", List.of("&7Click, then click a slot in the item editor")));
         inv.setItem(22, icon(Material.ARROW, "&cBack", List.of("&7Back to category")));
         inv.setItem(24, icon(Material.BARRIER, "&cClose", List.of("&7Close the editor")));
-        p.openInventory(inv);
+        openInventory(p, inv);
     }
 
     boolean handle(Player p, String title, int slot) {
