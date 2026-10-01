@@ -403,7 +403,7 @@ public final class ShopManager {
         if ("SPAWNER".equalsIgnoreCase(d.delivery())) {
             if (!plugin.getConfig().getBoolean("integrations.smart-spawners.enabled", true)) return false;
             return dispatch(plugin.getConfig().getString("integrations.smart-spawners.spawner-command",
-                    "/ss give {player} smart_spawner {type} {amount}"), p, d.target(), amount);
+                    "/ss give {player} {type} {amount}"), p, d.target(), amount);
         }
 
         if ("COMMAND".equalsIgnoreCase(d.delivery())) return dispatch(d.target(), p, d.target(), amount);
