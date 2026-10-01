@@ -17,6 +17,7 @@ final class ShopAdminGui {
     private final ZivexShopPlugin plugin;
     private final ShopManager shop;
     private final Map<UUID, String> moving = new HashMap<>();
+    private final Set<UUID> suppressCloseClear = new HashSet<>();
 
     ShopAdminGui(ZivexShopPlugin plugin, ShopManager shop) {
         this.plugin = plugin;
@@ -35,7 +36,7 @@ final class ShopAdminGui {
             if (c.slot() >= 0 && c.slot() < 27) inv.setItem(c.slot(), icon(c.material(), c.name(), c.lore()));
         inv.setItem(18, icon(Material.COMPASS, "&dReload Config", List.of("&7Reload the shop configuration")));
         inv.setItem(22, icon(Material.BARRIER, "&cClose", List.of("&7Close the editor")));
-        p.openInventory(inv);
+        openInventory(p, inv);
     }
 
     void openCategory(Player p, ShopManager.Category c) {
@@ -149,7 +150,24 @@ final class ShopAdminGui {
         return false;
     }
 
-    void clear(Player p) { moving.remove(p.getUniqueId()); }
+    /**
+     * Opens another editor view without treating the InventoryCloseEvent from the
+     * previous view as a real editor close. This preserves Move Item state.
+     */
+    private void openInventory(Player p, Inventory inv) {
+        suppressCloseClear.add(p.getUniqueId());
+        p.openInventory(inv);
+    }
+
+    boolean handleClose(Player p) {
+        return !suppressCloseClear.remove(p.getUniqueId());
+    }
+
+    void clear(Player p) {
+        UUID id = p.getUniqueId();
+        suppressCloseClear.remove(id);
+        moving.remove(id);
+    }
 
     private void changePrice(Player p, ShopManager.ItemDef d, double delta) {
         double next = Math.max(0, d.price() + delta);
