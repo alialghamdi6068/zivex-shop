@@ -3,14 +3,11 @@ package me.voidflame.zivexshop;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.*;
@@ -478,6 +475,40 @@ public final class ShopManager {
         if (item(cat, id) == null) return false;
         plugin.getConfig().set("categories." + cat + ".items." + id + ".enabled", enabled);
         plugin.saveConfig(); reload(); return true;
+    }
+
+    public boolean addItem(String cat, String id, Material material, String name, int slot, double price,
+                           String currency, String delivery, int amount, String target) {
+        Category c = category(cat);
+        if (c == null || id == null || id.isBlank() || material == null) return false;
+        if (item(cat, id) != null || slot < 0 || slot >= normalizedSize(plugin.getConfig().getInt("settings.category-size", 27))
+                || !Double.isFinite(price) || price < 0 || amount < 1 || amount > 64) return false;
+        for (ItemDef existing : c.items().values()) {
+            if (existing.slot() == slot) return false;
+        }
+
+        String base = "categories." + c.id() + ".items." + id.toLowerCase(Locale.ROOT);
+        plugin.getConfig().set(base + ".material", material.name());
+        plugin.getConfig().set(base + ".name", name == null || name.isBlank() ? id : name);
+        plugin.getConfig().set(base + ".slot", slot);
+        plugin.getConfig().set(base + ".price", price);
+        plugin.getConfig().set(base + ".currency", currency == null || currency.isBlank() ? "MONEY" : currency.toUpperCase(Locale.ROOT));
+        plugin.getConfig().set(base + ".delivery", delivery == null || delivery.isBlank() ? "VANILLA" : delivery.toUpperCase(Locale.ROOT));
+        plugin.getConfig().set(base + ".amount", amount);
+        plugin.getConfig().set(base + ".enabled", true);
+        plugin.getConfig().set(base + ".target", target == null || target.isBlank() ? id : target);
+        plugin.getConfig().set(base + ".lore", List.of("&7Price: &f" + price, "&eClick to purchase"));
+        plugin.saveConfig();
+        reload();
+        return true;
+    }
+
+    public boolean deleteItem(String cat, String id) {
+        if (item(cat, id) == null) return false;
+        plugin.getConfig().set("categories." + cat + ".items." + id, null);
+        plugin.saveConfig();
+        reload();
+        return true;
     }
 
     public boolean give(Player target, ItemDef d, int quantity) {
