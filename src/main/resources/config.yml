@@ -1,60 +1,83 @@
-# ZivexShop Configuration
-# الإعدادات قابلة للتعديل من هنا. النصوص داخل اللعبة بالإنجليزية، والتعليقات فقط للشرح.
+# ╔══════════════════════════════════════════════════════════════╗
+# ║                     ZivexShop Configuration                 ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# All in-game text is English.
+# Main shop layout follows the classic DonutSMP 27-slot chest layout:
+# category icons at slots 11-15, item row at slots 9-17, back at slot 18.
 
 settings:
-  # كل القوائم المطلوبة 27 خانة فقط.
+  # ──────────────────────────────────────────────────────────────
+  # GUI
+  # ──────────────────────────────────────────────────────────────
   main-title: "&8Shop"
-  category-title-format: "&8{category} Shop"
+  category-title-format: "&8{category}"
   purchase-title: "&8Purchase: {item}"
+
   main-size: 27
   category-size: 27
   purchase-size: 27
+
+  # Donut-style category menu: 9-item row + back button.
   back-slot: 18
 
-  # التحكم بالكمية.
+  # ──────────────────────────────────────────────────────────────
+  # Purchase controls
+  # ──────────────────────────────────────────────────────────────
   quantity-step: 1
   max-quantity: 64
-
   close-on-purchase: true
   refund-on-delivery-failure: true
+
+  # ──────────────────────────────────────────────────────────────
+  # Economy
+  # ──────────────────────────────────────────────────────────────
   sounds: true
   currency-symbol: "$"
   shard-currency-name: "Shards"
 
-  # محرر الأدمن.
+  # ──────────────────────────────────────────────────────────────
+  # Admin editor
+  # ──────────────────────────────────────────────────────────────
   editor-enabled: true
   editor-price-step-small: 1
   editor-price-step-large: 100
 
-  # قاعدة البيانات المشتركة.
+  # Shared Zivex database location.
   database-file: "../Zivex/database.db"
 
 integrations:
+  # Phoenix Crate Lite
   phoenix-crate-lite:
     enabled: true
     key-command: "/crates giveKey {key} {player} {amount}"
+
+  # Smart Spawners
   smart-spawners:
     enabled: true
     spawner-command: "/ss give {player} smart_spawner {type} {amount}"
-    # يجب أن يطابق target الاسم الفعلي للـSpawner في الإضافة.
 
 sounds:
   open:
     sound: "BLOCK_CHEST_OPEN"
     volume: 0.8
     pitch: 1.0
+
   category:
     sound: "BLOCK_CHEST_OPEN"
     volume: 0.8
     pitch: 1.05
+
   purchase:
     sound: "UI_BUTTON_CLICK"
     volume: 0.7
     pitch: 1.0
+
   success:
     sound: "ENTITY_PLAYER_LEVELUP"
     volume: 0.8
     pitch: 1.1
+
   fail:
     sound: "ENTITY_VILLAGER_NO"
     volume: 0.7
@@ -64,116 +87,577 @@ messages:
   prefix: "&5&lZivex &8» "
   no-permission: "&cYou don't have permission."
   player-only: "&cThis command can only be used by a player."
+
   reloaded: "&aShop configuration reloaded."
   invalid-item: "&cUnknown shop item."
   invalid-category: "&cUnknown shop category."
   duplicate-slot: "&cA shop slot is already occupied: {slot}"
+
   no-economy: "&cThe money economy is unavailable right now."
   no-shard-economy: "&cThe Shards economy is unavailable right now."
   invalid-shard-price: "&cThis Shards price is invalid."
   unsupported-currency: "&cUnsupported shop currency: {currency}."
+
   insufficient: "&cYou do not have enough currency for this purchase."
   purchased: "&aPurchased &f{amount}x {item} &afor &f{total}."
   delivery-failed: "&cPurchase failed while delivering the item. Your balance was restored."
   refund-failed: "&cPurchase delivery failed and the automatic refund also failed. Contact an administrator immediately."
+
   item-disabled: "&cThis item is currently disabled."
   purchase-processing: "&eYour purchase is already being processed."
   inventory-full: "&cYou do not have enough inventory space for this purchase."
   invalid-amount: "&cThe purchase amount is invalid."
   invalid-price: "&cThis item has an invalid price."
+
   player-usage: "&cUsage: /shop"
   admin-usage: "&cUsage: /shopadmin <gui|reload|list|debug|setprice|setslot|enable|disable|give|money>"
+
   price-updated: "&aPrice updated."
   slot-updated: "&aSlot updated."
   item-updated: "&aItem updated."
   invalid-slot: "&cThat slot is invalid or already occupied."
   invalid-number: "&cEnter a valid number."
   player-not-found: "&cPlayer not found."
+
   delivered: "&aDelivered &f{amount}x {item} &ato &f{player}&a."
   editor-disabled: "&cThe in-game shop editor is disabled."
   move-item: "&eMove mode enabled. Click an empty slot in the same category."
   money-updated: "&aMoney balance updated."
 
+# ═══════════════════════════════════════════════════════════════
+# Main Shop
+# Slots 11-15 intentionally match the Donut-style category layout.
+# ═══════════════════════════════════════════════════════════════
 categories:
+
   end:
     display-name: "&5End"
     material: END_STONE
     slot: 11
-    lore: ["&7Click to view the End Shop"]
+    lore:
+      - "&7Click to view the End Shop"
     items:
-      ender_chest: {material: ENDER_CHEST, name: "&5Ender Chest", slot: 10, price: 2500, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      ender_pearl: {material: ENDER_PEARL, name: "&dEnder Pearl", slot: 11, price: 75, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      end_stone: {material: END_STONE, name: "&fEnd Stone", slot: 12, price: 128, currency: MONEY, delivery: VANILLA, amount: 16, enabled: true}
-      dragon_breath: {material: DRAGON_BREATH, name: "&dDragon Breath", slot: 13, price: 1000, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      end_rod: {material: END_ROD, name: "&fEnd Rod", slot: 14, price: 100, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      chorus_fruit: {material: CHORUS_FRUIT, name: "&dChorus Fruit", slot: 15, price: 108, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      popped_chorus: {material: POPPED_CHORUS_FRUIT, name: "&dPopped Chorus Fruit", slot: 16, price: 24, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      shulker_shell: {material: SHULKER_SHELL, name: "&5Shulker Shell", slot: 19, price: 350, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      shulker_box: {material: SHULKER_BOX, name: "&5Shulker Box", slot: 20, price: 800, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
+
+      ender_chest:
+        material: ENDER_CHEST
+        name: "&5Ender Chest"
+        slot: 9
+        price: 2500
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      ender_pearl:
+        material: ENDER_PEARL
+        name: "&dEnder Pearl"
+        slot: 10
+        price: 75
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      end_stone:
+        material: END_STONE
+        name: "&fEnd Stone"
+        slot: 11
+        price: 128
+        currency: MONEY
+        delivery: VANILLA
+        amount: 16
+        enabled: true
+
+      dragon_breath:
+        material: DRAGON_BREATH
+        name: "&dDragon Breath"
+        slot: 12
+        price: 1000
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      end_rod:
+        material: END_ROD
+        name: "&fEnd Rod"
+        slot: 13
+        price: 100
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      chorus_fruit:
+        material: CHORUS_FRUIT
+        name: "&dChorus Fruit"
+        slot: 14
+        price: 108
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      popped_chorus:
+        material: POPPED_CHORUS_FRUIT
+        name: "&dPopped Chorus Fruit"
+        slot: 15
+        price: 24
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      shulker_shell:
+        material: SHULKER_SHELL
+        name: "&5Shulker Shell"
+        slot: 16
+        price: 350
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      shulker_box:
+        material: SHULKER_BOX
+        name: "&5Shulker Box"
+        slot: 17
+        price: 800
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
 
   nether:
     display-name: "&cNether"
     material: NETHERRACK
     slot: 12
-    lore: ["&7Click to view the Nether Shop"]
+    lore:
+      - "&7Click to view the Nether Shop"
     items:
-      blaze_rod: {material: BLAZE_ROD, name: "&6Blaze Rod", slot: 10, price: 150, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      nether_wart: {material: NETHER_WART, name: "&cNether Wart", slot: 11, price: 96, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      glowstone_dust: {material: GLOWSTONE_DUST, name: "&eGlowstone Dust", slot: 12, price: 15, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      magma_cream: {material: MAGMA_CREAM, name: "&6Magma Cream", slot: 13, price: 96, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      ghast_tear: {material: GHAST_TEAR, name: "&fGhast Tear", slot: 14, price: 350, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      nether_quartz: {material: QUARTZ, name: "&fNether Quartz", slot: 15, price: 30, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      soul_sand: {material: SOUL_SAND, name: "&6Soul Sand", slot: 16, price: 50, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      magma_block: {material: MAGMA_BLOCK, name: "&6Magma Block", slot: 19, price: 35, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      crying_obsidian: {material: CRYING_OBSIDIAN, name: "&5Crying Obsidian", slot: 20, price: 150, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
+
+      blaze_rod:
+        material: BLAZE_ROD
+        name: "&6Blaze Rod"
+        slot: 9
+        price: 150
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      nether_wart:
+        material: NETHER_WART
+        name: "&cNether Wart"
+        slot: 10
+        price: 96
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      glowstone_dust:
+        material: GLOWSTONE_DUST
+        name: "&eGlowstone Dust"
+        slot: 11
+        price: 15
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      magma_cream:
+        material: MAGMA_CREAM
+        name: "&6Magma Cream"
+        slot: 12
+        price: 96
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      ghast_tear:
+        material: GHAST_TEAR
+        name: "&fGhast Tear"
+        slot: 13
+        price: 350
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      nether_quartz:
+        material: QUARTZ
+        name: "&fNether Quartz"
+        slot: 14
+        price: 30
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      soul_sand:
+        material: SOUL_SAND
+        name: "&6Soul Sand"
+        slot: 15
+        price: 50
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      magma_block:
+        material: MAGMA_BLOCK
+        name: "&6Magma Block"
+        slot: 16
+        price: 35
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      crying_obsidian:
+        material: CRYING_OBSIDIAN
+        name: "&5Crying Obsidian"
+        slot: 17
+        price: 150
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
 
   gear:
     display-name: "&bGear"
     material: TOTEM_OF_UNDYING
     slot: 13
-    lore: ["&7Click to view the Gear Shop"]
+    lore:
+      - "&7Click to view the Gear Shop"
     items:
-      obsidian: {material: OBSIDIAN, name: "&8Obsidian", slot: 10, price: 100, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      end_crystal: {material: END_CRYSTAL, name: "&dEnd Crystal", slot: 11, price: 350, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      respawn_anchor: {material: RESPAWN_ANCHOR, name: "&5Respawn Anchor", slot: 12, price: 1000, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      glowstone: {material: GLOWSTONE, name: "&eGlowstone", slot: 13, price: 100, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      totem: {material: TOTEM_OF_UNDYING, name: "&6Totem of Undying", slot: 14, price: 1500, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      ender_pearl: {material: ENDER_PEARL, name: "&dEnder Pearl", slot: 15, price: 75, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      golden_apple: {material: GOLDEN_APPLE, name: "&6Golden Apple", slot: 16, price: 250, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      xp_bottle: {material: EXPERIENCE_BOTTLE, name: "&aBottle o' Enchanting", slot: 19, price: 100, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      slow_falling_arrow: {material: TIPPED_ARROW, name: "&fArrow of Slow Falling", slot: 20, price: 500, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
+
+      obsidian:
+        material: OBSIDIAN
+        name: "&8Obsidian"
+        slot: 9
+        price: 100
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      end_crystal:
+        material: END_CRYSTAL
+        name: "&dEnd Crystal"
+        slot: 10
+        price: 350
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      respawn_anchor:
+        material: RESPAWN_ANCHOR
+        name: "&5Respawn Anchor"
+        slot: 11
+        price: 1000
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      glowstone:
+        material: GLOWSTONE
+        name: "&eGlowstone"
+        slot: 12
+        price: 100
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      totem:
+        material: TOTEM_OF_UNDYING
+        name: "&6Totem of Undying"
+        slot: 13
+        price: 1500
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      ender_pearl:
+        material: ENDER_PEARL
+        name: "&dEnder Pearl"
+        slot: 14
+        price: 75
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      golden_apple:
+        material: GOLDEN_APPLE
+        name: "&6Golden Apple"
+        slot: 15
+        price: 250
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      xp_bottle:
+        material: EXPERIENCE_BOTTLE
+        name: "&aBottle o' Enchanting"
+        slot: 16
+        price: 100
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      slow_falling_arrow:
+        material: TIPPED_ARROW
+        name: "&fArrow of Slow Falling"
+        slot: 17
+        price: 500
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
 
   food:
     display-name: "&aFood"
     material: COOKED_BEEF
     slot: 14
-    lore: ["&7Click to view the Food Shop"]
+    lore:
+      - "&7Click to view the Food Shop"
     items:
-      potato: {material: POTATO, name: "&ePotato", slot: 10, price: 96, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      sweet_berries: {material: SWEET_BERRIES, name: "&dSweet Berries", slot: 11, price: 50, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      melon_slice: {material: MELON_SLICE, name: "&aMelon Slice", slot: 12, price: 36, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      carrot: {material: CARROT, name: "&6Carrot", slot: 13, price: 96, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      apple: {material: APPLE, name: "&cApple", slot: 14, price: 25, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      cooked_chicken: {material: COOKED_CHICKEN, name: "&fCooked Chicken", slot: 15, price: 48, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      steak: {material: COOKED_BEEF, name: "&6Steak", slot: 16, price: 35, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      golden_carrot: {material: GOLDEN_CARROT, name: "&6Golden Carrot", slot: 19, price: 120, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
-      golden_apple: {material: GOLDEN_APPLE, name: "&6Golden Apple", slot: 20, price: 250, currency: MONEY, delivery: VANILLA, amount: 1, enabled: true}
+
+      potato:
+        material: POTATO
+        name: "&ePotato"
+        slot: 9
+        price: 96
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      sweet_berries:
+        material: SWEET_BERRIES
+        name: "&dSweet Berries"
+        slot: 10
+        price: 50
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      melon_slice:
+        material: MELON_SLICE
+        name: "&aMelon Slice"
+        slot: 11
+        price: 36
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      carrot:
+        material: CARROT
+        name: "&6Carrot"
+        slot: 12
+        price: 96
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      apple:
+        material: APPLE
+        name: "&cApple"
+        slot: 13
+        price: 25
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      cooked_chicken:
+        material: COOKED_CHICKEN
+        name: "&fCooked Chicken"
+        slot: 14
+        price: 48
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      steak:
+        material: COOKED_BEEF
+        name: "&6Steak"
+        slot: 15
+        price: 35
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      golden_carrot:
+        material: GOLDEN_CARROT
+        name: "&6Golden Carrot"
+        slot: 16
+        price: 120
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      golden_apple:
+        material: GOLDEN_APPLE
+        name: "&6Golden Apple"
+        slot: 17
+        price: 250
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
 
   shard_shop:
     display-name: "&dShard Shop"
     material: AMETHYST_SHARD
     slot: 15
-    lore: ["&7Purchase crates and SmartSpawner spawners with Shards"]
+    lore:
+      - "&7Purchase spawners and keys with Shards"
     items:
-      pig_spawner: {material: SPAWNER, name: "&fPig Spawner", slot: 10, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, enabled: true, target: pig_spawner}
-      cow_spawner: {material: SPAWNER, name: "&fCow Spawner", slot: 11, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, enabled: true, target: cow_spawner}
-      zombie_spawner: {material: SPAWNER, name: "&2Zombie Spawner", slot: 12, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, enabled: true, target: zombie_spawner}
-      spider_spawner: {material: SPAWNER, name: "&4Spider Spawner", slot: 13, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, enabled: true, target: spider_spawner}
-      skeleton_spawner: {material: SPAWNER, name: "&fSkeleton Spawner", slot: 14, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, enabled: true, target: skeleton_spawner}
-      creeper_spawner: {material: SPAWNER, name: "&aCreeper Spawner", slot: 15, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, enabled: true, target: creeper_spawner}
-      zombified_piglin_spawner: {material: SPAWNER, name: "&6Zombified Piglin Spawner", slot: 16, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, enabled: true, target: zombified_piglin_spawner}
-      blaze_spawner: {material: SPAWNER, name: "&6Blaze Spawner", slot: 19, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, enabled: true, target: blaze_spawner}
-      iron_golem_spawner: {material: SPAWNER, name: "&fIron Golem Spawner", slot: 20, price: 1500, currency: SHARDS, delivery: SPAWNER, amount: 1, enabled: true, target: iron_golem_spawner}
-      common_key: {material: TRIPWIRE_HOOK, name: "&fCommon Key", slot: 21, price: 200, currency: SHARDS, delivery: CRATE_KEY, amount: 1, enabled: true, target: common}
-      crimson_key: {material: TRIPWIRE_HOOK, name: "&cCrimson Key", slot: 22, price: 2500, currency: SHARDS, delivery: CRATE_KEY, amount: 1, enabled: true, target: crimson}
-      prime_key: {material: TRIPWIRE_HOOK, name: "&6Prime Key", slot: 23, price: 2500, currency: SHARDS, delivery: CRATE_KEY, amount: 1, enabled: true, target: prime}
+
+      pig_spawner:
+        material: SPAWNER
+        name: "&fPig Spawner"
+        slot: 9
+        price: 1500
+        currency: SHARDS
+        delivery: SPAWNER
+        amount: 1
+        enabled: true
+        target: pig_spawner
+
+      cow_spawner:
+        material: SPAWNER
+        name: "&fCow Spawner"
+        slot: 10
+        price: 1500
+        currency: SHARDS
+        delivery: SPAWNER
+        amount: 1
+        enabled: true
+        target: cow_spawner
+
+      zombie_spawner:
+        material: SPAWNER
+        name: "&2Zombie Spawner"
+        slot: 11
+        price: 1500
+        currency: SHARDS
+        delivery: SPAWNER
+        amount: 1
+        enabled: true
+        target: zombie_spawner
+
+      spider_spawner:
+        material: SPAWNER
+        name: "&4Spider Spawner"
+        slot: 12
+        price: 1500
+        currency: SHARDS
+        delivery: SPAWNER
+        amount: 1
+        enabled: true
+        target: spider_spawner
+
+      skeleton_spawner:
+        material: SPAWNER
+        name: "&fSkeleton Spawner"
+        slot: 13
+        price: 1500
+        currency: SHARDS
+        delivery: SPAWNER
+        amount: 1
+        enabled: true
+        target: skeleton_spawner
+
+      creeper_spawner:
+        material: SPAWNER
+        name: "&aCreeper Spawner"
+        slot: 14
+        price: 1500
+        currency: SHARDS
+        delivery: SPAWNER
+        amount: 1
+        enabled: true
+        target: creeper_spawner
+
+      zombified_piglin_spawner:
+        material: SPAWNER
+        name: "&6Zombified Piglin Spawner"
+        slot: 15
+        price: 1500
+        currency: SHARDS
+        delivery: SPAWNER
+        amount: 1
+        enabled: true
+        target: zombified_piglin_spawner
+
+      blaze_spawner:
+        material: SPAWNER
+        name: "&6Blaze Spawner"
+        slot: 16
+        price: 1500
+        currency: SHARDS
+        delivery: SPAWNER
+        amount: 1
+        enabled: true
+        target: blaze_spawner
+
+      iron_golem_spawner:
+        material: SPAWNER
+        name: "&fIron Golem Spawner"
+        slot: 17
+        price: 1500
+        currency: SHARDS
+        delivery: SPAWNER
+        amount: 1
+        enabled: true
+        target: iron_golem_spawner
+
+      common_key:
+        material: TRIPWIRE_HOOK
+        name: "&fCommon Key"
+        slot: 19
+        price: 200
+        currency: SHARDS
+        delivery: CRATE_KEY
+        amount: 1
+        enabled: true
+        target: common
+
+      crimson_key:
+        material: TRIPWIRE_HOOK
+        name: "&cCrimson Key"
+        slot: 20
+        price: 2500
+        currency: SHARDS
+        delivery: CRATE_KEY
+        amount: 1
+        enabled: true
+        target: crimson
+
+      prime_key:
+        material: TRIPWIRE_HOOK
+        name: "&6Prime Key"
+        slot: 21
+        price: 2500
+        currency: SHARDS
+        delivery: CRATE_KEY
+        amount: 1
+        enabled: true
+        target: prime
