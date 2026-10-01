@@ -55,7 +55,7 @@ integrations:
   # Smart Spawners
   smart-spawners:
     enabled: true
-    spawner-command: "/ss give {player} smart_spawner {type} {amount}"
+    spawner-command: "/ss give {player} {type} {amount}"
 
 sounds:
   open:
