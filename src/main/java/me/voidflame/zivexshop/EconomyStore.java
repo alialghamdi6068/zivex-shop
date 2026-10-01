@@ -1,73 +1,99 @@
 package me.voidflame.zivexshop;
 
-import java.io.File;
-import java.sql.*;
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.RegisteredServiceProvider;
+
 import java.util.UUID;
 
 public final class EconomyStore {
     private final ZivexShopPlugin plugin;
-    private final File file;
-    private Connection connection;
+    private Economy economy;
 
     public EconomyStore(ZivexShopPlugin plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), plugin.getConfig().getString("settings.database-file", "../Zivex/database.db"));
-        open();
+        refresh();
     }
 
-    private synchronized void open() {
-        try {
-            File parent = file.getParentFile();
-            if (parent != null && !parent.exists() && !parent.mkdirs()) throw new SQLException("Could not create database directory");
-            connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
-            try (Statement s = connection.createStatement()) {
-                s.execute("PRAGMA journal_mode=DELETE");
-                s.execute("PRAGMA foreign_keys=ON");
-                s.execute("PRAGMA busy_timeout=5000");
-                s.execute("CREATE TABLE IF NOT EXISTS economy (uuid TEXT PRIMARY KEY, balance REAL NOT NULL DEFAULT 0 CHECK(balance >= 0))");
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Could not open ZivexShop SQLite database", e);
+    public synchronized void refresh() {
+        RegisteredServiceProvider<Economy> registration =
+                Bukkit.getServicesManager().getRegistration(Economy.class);
+        economy = registration == null ? null : registration.getProvider();
+        if (economy == null) {
+            plugin.getLogger().warning("Vault Economy provider is unavailable. Money purchases are disabled until a provider is available.");
         }
     }
 
-    public synchronized void load() {
-        if (connection == null) open();
+    private Economy provider() {
+        if (economy == null) refresh();
+        return economy;
     }
 
     public synchronized double balance(UUID uuid) {
-        try (PreparedStatement ps = connection.prepareStatement("SELECT balance FROM economy WHERE uuid=?")) {
-            ps.setString(1, uuid.toString());
-            try (ResultSet rs = ps.executeQuery()) { return rs.next() ? Math.max(0D, rs.getDouble(1)) : 0D; }
-        } catch (SQLException e) { plugin.getLogger().severe("Economy read failed: " + e.getMessage()); return -1D; }
+        Economy provider = provider();
+        if (provider == null) return -1D;
+        try {
+            return Math.max(0D, provider.getBalance(Bukkit.getOfflinePlayer(uuid)));
+        } catch (RuntimeException e) {
+            plugin.getLogger().severe("Vault balance read failed: " + e.getMessage());
+            return -1D;
+        }
     }
 
     public synchronized boolean withdraw(UUID uuid, double amount) {
         if (!valid(amount)) return false;
-        try (PreparedStatement ps = connection.prepareStatement("UPDATE economy SET balance=balance-? WHERE uuid=? AND balance>=?")) {
-            ps.setDouble(1, amount); ps.setString(2, uuid.toString()); ps.setDouble(3, amount);
-            return ps.executeUpdate() == 1;
-        } catch (SQLException e) { plugin.getLogger().severe("Economy withdraw failed: " + e.getMessage()); return false; }
+        Economy provider = provider();
+        if (provider == null) return false;
+        try {
+            var response = provider.withdrawPlayer(Bukkit.getOfflinePlayer(uuid), amount);
+            return response.transactionSuccess();
+        } catch (RuntimeException e) {
+            plugin.getLogger().severe("Vault withdraw failed: " + e.getMessage());
+            return false;
+        }
     }
 
     public synchronized boolean deposit(UUID uuid, double amount) {
         if (!valid(amount)) return false;
-        try (PreparedStatement ps = connection.prepareStatement("INSERT INTO economy(uuid,balance) VALUES(?,?) ON CONFLICT(uuid) DO UPDATE SET balance=balance+excluded.balance")) {
-            ps.setString(1, uuid.toString()); ps.setDouble(2, amount); return ps.executeUpdate() == 1;
-        } catch (SQLException e) { plugin.getLogger().severe("Economy deposit failed: " + e.getMessage()); return false; }
+        Economy provider = provider();
+        if (provider == null) return false;
+        try {
+            var response = provider.depositPlayer(Bukkit.getOfflinePlayer(uuid), amount);
+            return response.transactionSuccess();
+        } catch (RuntimeException e) {
+            plugin.getLogger().severe("Vault deposit failed: " + e.getMessage());
+            return false;
+        }
     }
 
     public synchronized boolean set(UUID uuid, double amount) {
         if (!valid(amount)) return false;
-        try (PreparedStatement ps = connection.prepareStatement("INSERT INTO economy(uuid,balance) VALUES(?,?) ON CONFLICT(uuid) DO UPDATE SET balance=excluded.balance")) {
-            ps.setString(1, uuid.toString()); ps.setDouble(2, amount); return ps.executeUpdate() == 1;
-        } catch (SQLException e) { plugin.getLogger().severe("Economy set failed: " + e.getMessage()); return false; }
+        Economy provider = provider();
+        if (provider == null) return false;
+        try {
+            double current = provider.getBalance(Bukkit.getOfflinePlayer(uuid));
+            if (!Double.isFinite(current) || current < 0) return false;
+            double delta = amount - current;
+            if (Math.abs(delta) < 0.0000001D) return true;
+            var response = delta > 0
+                    ? provider.depositPlayer(Bukkit.getOfflinePlayer(uuid), delta)
+                    : provider.withdrawPlayer(Bukkit.getOfflinePlayer(uuid), -delta);
+            return response.transactionSuccess();
+        } catch (RuntimeException e) {
+            plugin.getLogger().severe("Vault set failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public synchronized void load() {
+        refresh();
     }
 
     public synchronized void close() {
-        try { if (connection != null && !connection.isClosed()) connection.close(); }
-        catch (SQLException e) { plugin.getLogger().warning("Failed to close economy database: " + e.getMessage()); }
+        economy = null;
     }
 
-    private boolean valid(double amount) { return Double.isFinite(amount) && amount >= 0D; }
+    private boolean valid(double amount) {
+        return Double.isFinite(amount) && amount >= 0D;
+    }
 }
