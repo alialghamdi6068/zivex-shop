@@ -110,7 +110,7 @@ messages:
   invalid-price: "&cThis item has an invalid price."
 
   player-usage: "&cUsage: /shop"
-  admin-usage: "&cUsage: /shopadmin <gui|reload|list|debug|setprice|setslot|enable|disable|give|money>"
+  admin-usage: "&cUsage: /shopadmin <gui|reload|list|debug|setprice|setslot|enable|disable|add|delete|give|money>"
 
   price-updated: "&aPrice updated."
   slot-updated: "&aSlot updated."
