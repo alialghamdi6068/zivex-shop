@@ -81,7 +81,11 @@ public final class ShopManager {
                     }
 
                     Material material = material(x.getString("material"), Material.STONE);
-                    int amount = Math.max(1, x.getInt("amount", 1));
+                    int amount = x.getInt("amount", 1);
+                    if (amount < 1 || amount > 64) {
+                        plugin.getLogger().warning("Invalid purchase bundle amount for " + id + "/" + itemId + ": " + amount + " (expected 1-64)");
+                        continue;
+                    }
                     String delivery = x.getString("delivery", "VANILLA");
                     boolean enabled = x.getBoolean("enabled", true);
 
@@ -177,6 +181,13 @@ public final class ShopManager {
         Inventory inv = Bukkit.createInventory(null, size, color(title));
         fillBorder(inv, size, Material.GRAY_STAINED_GLASS_PANE);
 
+        long deliveryAmount;
+        try {
+            deliveryAmount = Math.multiplyExact((long) quantity, (long) d.amount());
+        } catch (ArithmeticException ex) {
+            p.sendMessage(plugin.msg("invalid-amount"));
+            return;
+        }
         double total = d.price() * quantity;
         ItemStack display = icon(d.material(), d.name(), List.of(
                 "&7Unit price: &f" + money(d.price(), d.currency()),
@@ -186,7 +197,7 @@ public final class ShopManager {
                 "&7Balance: &f" + balanceText(p, d.currency()),
                 "&eYour selected quantity is shown on the item."
         ));
-        display.setAmount(Math.min(quantity, Math.max(1, display.getMaxStackSize())));
+        display.setAmount((int) Math.min(deliveryAmount, Math.max(1, display.getMaxStackSize())));
         inv.setItem(13, display);
 
         inv.setItem(10, icon(Material.REDSTONE_BLOCK, "&c-64", List.of("&7Remove 64")));
@@ -429,11 +440,27 @@ public final class ShopManager {
     public boolean setSlot(String cat, String id, int slot) {
         int size = normalizedSize(plugin.getConfig().getInt("settings.category-size", 27));
         Category c = category(cat);
-        if (c == null || item(cat, id) == null || slot < 0 || slot >= size) return false;
-        for (ItemDef other : c.items().values())
-            if (!other.id().equalsIgnoreCase(id) && other.slot() == slot) return false;
-        plugin.getConfig().set("categories." + cat + ".items." + id + ".slot", slot);
-        plugin.saveConfig(); reload(); return true;
+        ItemDef source = item(cat, id);
+        if (c == null || source == null || slot < 0 || slot >= size) return false;
+
+        ItemDef target = null;
+        for (ItemDef other : c.items().values()) {
+            if (!other.id().equalsIgnoreCase(id) && other.slot() == slot) {
+                target = other;
+                break;
+            }
+        }
+
+        String sourcePath = "categories." + cat + ".items." + id + ".slot";
+        plugin.getConfig().set(sourcePath, slot);
+
+        if (target != null) {
+            plugin.getConfig().set("categories." + cat + ".items." + target.id() + ".slot", source.slot());
+        }
+
+        plugin.saveConfig();
+        reload();
+        return true;
     }
 
     public boolean setEnabled(String cat, String id, boolean enabled) {
