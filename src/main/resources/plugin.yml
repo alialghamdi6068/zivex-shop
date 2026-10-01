@@ -4,7 +4,9 @@ main: me.voidflame.zivexshop.ZivexShopPlugin
 api-version: '26.2'
 author: Zivex
 website: https://github.com/alialghamdi6068/zivex-shop
-description: Configurable Zivex shop with built-in economy, Shards, crate and spawner delivery integrations.
+description: Configurable Zivex shop using Vault Economy, ZivexShards, crate and spawner delivery integrations.
+depend:
+  - Vault
 softdepend:
   - PhoenixCrates
   - PhoenixCrateLite
