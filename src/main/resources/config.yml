@@ -125,6 +125,7 @@ messages:
   money-updated: "&aMoney balance updated."
   add-usage: "&cUsage: /shopadmin add <category> <id> <material> <slot> <price> <currency> <delivery> [amount] [target]"
   delete-usage: "&cUsage: /shopadmin delete <category> <id>"
+  delete-confirm: "&eClick Delete Item again to confirm permanent deletion."
   invalid-material: "&cUnknown Minecraft material."
   invalid-delivery: "&cUnsupported delivery type."
   item-added: "&aAdded &f{item} &ato category &f{category}&a."
