@@ -123,6 +123,13 @@ messages:
   editor-disabled: "&cThe in-game shop editor is disabled."
   move-item: "&eMove mode enabled. Click an empty slot in the same category."
   money-updated: "&aMoney balance updated."
+  add-usage: "&cUsage: /shopadmin add <category> <id> <material> <slot> <price> <currency> <delivery> [amount] [target]"
+  delete-usage: "&cUsage: /shopadmin delete <category> <id>"
+  invalid-material: "&cUnknown Minecraft material."
+  invalid-delivery: "&cUnsupported delivery type."
+  item-added: "&aAdded &f{item} &ato category &f{category}&a."
+  item-add-failed: "&cCould not add the item. Check the category, ID, slot, price, and amount."
+  item-deleted: "&aDeleted &f{item} &afrom category &f{category}&a."
 
 # ═══════════════════════════════════════════════════════════════
 # Main Shop
