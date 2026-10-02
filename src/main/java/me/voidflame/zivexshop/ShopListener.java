@@ -26,6 +26,9 @@ public final class ShopListener implements Listener {
         if (!(e.getWhoClicked() instanceof Player p)) return;
 
         String title = e.getView().getTitle();
+        if (e.getView().getTopInventory().getHolder() instanceof ShopManager.ShopHolder) {
+            e.setCancelled(true);
+        }
         if (adminTitle(title)) {
             e.setCancelled(true);
             adminGui.handle(p, title, e.getRawSlot());
@@ -106,6 +109,10 @@ public final class ShopListener implements Listener {
     @EventHandler
     public void drag(InventoryDragEvent e) {
         String title = e.getView().getTitle();
+        if (e.getView().getTopInventory().getHolder() instanceof ShopManager.ShopHolder) {
+            e.setCancelled(true);
+            return;
+        }
         if (adminTitle(title)) { e.setCancelled(true); return; }
 
         String main = ZivexShopPlugin.color(plugin.getConfig().getString("settings.main-title", "&8Shop"));
