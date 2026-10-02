@@ -106,7 +106,48 @@ public final class ShopManager {
                     c.getStringList("lore"), items));
         }
 
+        validateConfiguration(mainSize, categorySize);
         validateFixedMainSlots();
+    }
+
+    private void validateConfiguration(int mainSize, int categorySize) {
+        Set<String> seenCategoryIds = new HashSet<>();
+        int backSlot = plugin.getConfig().getInt("settings.back-slot", 18);
+        if (backSlot < 0 || backSlot >= categorySize) {
+            plugin.getLogger().warning("Invalid category back slot: " + backSlot + " (category size=" + categorySize + ")");
+        }
+
+        for (Category c : categories.values()) {
+            if (!seenCategoryIds.add(c.id())) {
+                plugin.getLogger().warning("Duplicate category id: " + c.id());
+            }
+            if (c.slot() == backSlot) {
+                plugin.getLogger().warning("Category " + c.id() + " uses the same slot as the category back button: " + backSlot);
+            }
+
+            Set<Integer> seenItemSlots = new HashSet<>();
+            for (ItemDef d : c.items().values()) {
+                if (!seenItemSlots.add(d.slot())) {
+                    plugin.getLogger().warning("Duplicate item slot in " + c.id() + ": " + d.slot());
+                }
+                if (d.slot() == backSlot) {
+                    plugin.getLogger().warning("Item " + c.id() + "/" + d.id() + " uses the same slot as the category back button: " + backSlot);
+                }
+
+                if (!Set.of("MONEY", "SHARDS").contains(d.currency().toUpperCase(Locale.ROOT))) {
+                    plugin.getLogger().warning("Unsupported currency for " + c.id() + "/" + d.id() + ": " + d.currency());
+                }
+                if (!Set.of("VANILLA", "CRATE_KEY", "SPAWNER", "COMMAND").contains(d.delivery().toUpperCase(Locale.ROOT))) {
+                    plugin.getLogger().warning("Unsupported delivery for " + c.id() + "/" + d.id() + ": " + d.delivery());
+                }
+                if ("SHARDS".equalsIgnoreCase(d.currency()) && d.price() != Math.rint(d.price())) {
+                    plugin.getLogger().warning("Shards price must be a whole number for " + c.id() + "/" + d.id());
+                }
+                if (d.target() == null || d.target().isBlank()) {
+                    plugin.getLogger().warning("Missing delivery target for " + c.id() + "/" + d.id());
+                }
+            }
+        }
     }
 
     private void validateFixedMainSlots() {
@@ -180,6 +221,10 @@ public final class ShopManager {
         try {
             deliveryAmount = Math.multiplyExact((long) quantity, (long) d.amount());
         } catch (ArithmeticException ex) {
+            p.sendMessage(plugin.msg("invalid-amount"));
+            return;
+        }
+        if (deliveryAmount <= 0 || deliveryAmount > Integer.MAX_VALUE) {
             p.sendMessage(plugin.msg("invalid-amount"));
             return;
         }
@@ -404,7 +449,9 @@ public final class ShopManager {
             return dispatchSpawner(p, d.target(), amount);
         }
 
-        if ("COMMAND".equalsIgnoreCase(d.delivery())) return dispatchConfigured(d.target(), p, d.target(), amount);
+        if ("COMMAND".equalsIgnoreCase(d.delivery())) {
+            return dispatchConfigured(d.target(), p, d.target(), amount);
+        }
         return false;
     }
 
@@ -438,6 +485,7 @@ public final class ShopManager {
         if (raw == null || raw.isBlank()) return false;
         String cmd = raw.trim();
         if (cmd.startsWith("/")) cmd = cmd.substring(1);
+        if (cmd.isBlank()) return false;
         cmd = cmd.replace("{player}", p.getName())
                 .replace("{key}", target)
                 .replace("{type}", target)
