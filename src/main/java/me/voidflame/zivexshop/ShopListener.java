@@ -27,6 +27,11 @@ public final class ShopListener implements Listener {
         if (!(e.getWhoClicked() instanceof Player p)) return;
 
         String title = e.getView().getTitle();
+        if (e.getView().getTopInventory().getHolder() instanceof ShopAdminGui.AdminHolder) {
+            e.setCancelled(true);
+            adminGui.handle(p, title, e.getRawSlot());
+            return;
+        }
         if (adminTitle(title)) {
             e.setCancelled(true);
             adminGui.handle(p, title, e.getRawSlot());
@@ -125,7 +130,8 @@ public final class ShopListener implements Listener {
 
     @EventHandler
     public void drag(InventoryDragEvent e) {
-        if (adminTitle(e.getView().getTitle())) {
+        if (e.getView().getTopInventory().getHolder() instanceof ShopAdminGui.AdminHolder
+                || adminTitle(e.getView().getTitle())) {
             e.setCancelled(true);
             return;
         }
