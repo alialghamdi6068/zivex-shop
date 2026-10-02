@@ -549,7 +549,7 @@ public final class ShopManager {
         int size = normalizedSize(plugin.getConfig().getInt("settings.category-size", 27));
         Category c = category(cat);
         ItemDef source = item(cat, id);
-        if (c == null || source == null || slot < 0 || slot >= size) return false;
+        if (c == null || source == null || slot < 0 || slot >= size) return false;\n        int backSlot = plugin.getConfig().getInt("settings.back-slot", 18);\n        if (slot == backSlot) return false;
 
         ItemDef target = null;
         for (ItemDef other : c.items().values()) {
@@ -604,7 +604,7 @@ public final class ShopManager {
     public boolean addItem(String cat, String id, Material material, String name, int slot, double price,
                            String currency, String delivery, int amount, String target) {
         Category c = category(cat);
-        if (c == null || id == null || id.isBlank() || material == null) return false;
+        if (c == null || id == null || id.isBlank() || material == null) return false;\n        int backSlot = plugin.getConfig().getInt("settings.back-slot", 18);\n        if (slot == backSlot) return false;
         if (item(cat, id) != null || slot < 0 || slot >= normalizedSize(plugin.getConfig().getInt("settings.category-size", 27))
                 || !Double.isFinite(price) || price < 0 || amount < 1 || amount > 64) return false;
         for (ItemDef existing : c.items().values()) {
