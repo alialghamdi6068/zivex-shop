@@ -10,9 +10,9 @@ settings:
   # ──────────────────────────────────────────────────────────────
   # GUI
   # ──────────────────────────────────────────────────────────────
-  main-title: "&8Shop"
-  category-title-format: "&8{category}"
-  purchase-title: "&8Purchase: {item}"
+  main-title: "&8SHOP"
+  category-title-format: "&8SHOP - {category}"
+  purchase-title: "&8SHOP - BUY MENU"
 
   main-size: 27
   category-size: 27
