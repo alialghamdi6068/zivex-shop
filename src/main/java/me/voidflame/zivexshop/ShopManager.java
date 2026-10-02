@@ -135,7 +135,6 @@ public final class ShopManager {
         int size = normalizedSize(plugin.getConfig().getInt("settings.main-size", 27));
         Inventory inv = Bukkit.createInventory(new ShopHolder(ShopHolder.Type.MAIN, null), size,
                 color(plugin.getConfig().getString("settings.main-title", "&8Shop")));
-        fillBorder(inv, size, Material.GRAY_STAINED_GLASS_PANE);
         for (Category c : categories.values()) {
             if (c.slot() >= 0 && c.slot() < size)
                 inv.setItem(c.slot(), icon(c.material(), c.name(), c.lore()));
@@ -153,7 +152,6 @@ public final class ShopManager {
                 .replace("{category}", ChatText.strip(c.name()));
         Inventory inv = Bukkit.createInventory(new ShopHolder(ShopHolder.Type.CATEGORY, c.id()), size, color(title));
 
-        fillBorder(inv, size, Material.GRAY_STAINED_GLASS_PANE);
         for (ItemDef d : c.items().values()) {
             if (!d.enabled()) continue;
             inv.setItem(d.slot(), icon(d.material(), d.name(), loreFor(d)));
@@ -520,6 +518,30 @@ public final class ShopManager {
 
         if (target != null) {
             plugin.getConfig().set("categories." + cat + ".items." + target.id() + ".slot", source.slot());
+        }
+
+        plugin.saveConfig();
+        reload();
+        return true;
+    }
+
+    public boolean setCategorySlot(String id, int slot) {
+        Category source = category(id);
+        int size = normalizedSize(plugin.getConfig().getInt("settings.main-size", 27));
+        if (source == null || slot < 0 || slot >= size) return false;
+
+        Category target = null;
+        for (Category other : categories.values()) {
+            if (!other.id().equalsIgnoreCase(source.id()) && other.slot() == slot) {
+                target = other;
+                break;
+            }
+        }
+
+        String sourcePath = "categories." + source.id() + ".slot";
+        plugin.getConfig().set(sourcePath, slot);
+        if (target != null) {
+            plugin.getConfig().set("categories." + target.id() + ".slot", source.slot());
         }
 
         plugin.saveConfig();
