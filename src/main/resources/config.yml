@@ -10,9 +10,9 @@ settings:
   # ──────────────────────────────────────────────────────────────
   # GUI
   # ──────────────────────────────────────────────────────────────
-  main-title: "&8SHOP"
-  category-title-format: "&8SHOP - {category}"
-  purchase-title: "&8SHOP - BUY MENU"
+  main-title: "&8Shop"
+  category-title-format: "&8{category}"
+  purchase-title: "&8Confirmation Menu"
 
   main-size: 27
   category-size: 27
@@ -145,28 +145,18 @@ messages:
 categories:
 
   end:
-    display-name: "&5End"
+    display-name: "&7End"
     material: END_STONE
     slot: 11
     lore:
-      - "&7Click to view the End Shop"
+      - "&7Click to view the end shop"
     items:
 
       ender_chest:
         material: ENDER_CHEST
-        name: "&5Ender Chest"
-        slot: 9
-        price: 2500
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      ender_pearl:
-        material: ENDER_PEARL
-        name: "&dEnder Pearl"
+        name: "&7Ender Chest"
         slot: 10
-        price: 75
+        price: 800
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -174,19 +164,9 @@ categories:
 
       end_stone:
         material: END_STONE
-        name: "&fEnd Stone"
+        name: "&7End Stone"
         slot: 11
-        price: 128
-        currency: MONEY
-        delivery: VANILLA
-        amount: 16
-        enabled: true
-
-      dragon_breath:
-        material: DRAGON_BREATH
-        name: "&dDragon Breath"
-        slot: 12
-        price: 1000
+        price: 10
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -194,8 +174,8 @@ categories:
 
       end_rod:
         material: END_ROD
-        name: "&fEnd Rod"
-        slot: 13
+        name: "&7End Rod"
+        slot: 12
         price: 100
         currency: MONEY
         delivery: VANILLA
@@ -204,29 +184,19 @@ categories:
 
       chorus_fruit:
         material: CHORUS_FRUIT
-        name: "&dChorus Fruit"
+        name: "&7Chorus Fruit"
+        slot: 13
+        price: 60
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      ender_pearl:
+        material: ENDER_PEARL
+        name: "&7Ender Pearl"
         slot: 14
-        price: 108
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      popped_chorus:
-        material: POPPED_CHORUS_FRUIT
-        name: "&dPopped Chorus Fruit"
-        slot: 15
-        price: 24
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      shulker_shell:
-        material: SHULKER_SHELL
-        name: "&5Shulker Shell"
-        slot: 16
-        price: 350
+        price: 75
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -234,26 +204,36 @@ categories:
 
       shulker_box:
         material: SHULKER_BOX
-        name: "&5Shulker Box"
-        slot: 17
-        price: 800
+        name: "&7Shulker Box"
+        slot: 15
+        price: 300
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      shulker_shell:
+        material: SHULKER_SHELL
+        name: "&7Shulker Shell"
+        slot: 16
+        price: 150
         currency: MONEY
         delivery: VANILLA
         amount: 1
         enabled: true
 
   nether:
-    display-name: "&cNether"
+    display-name: "&7Nether"
     material: NETHERRACK
     slot: 12
     lore:
-      - "&7Click to view the Nether Shop"
+      - "&7Click to view the nether shop"
     items:
 
       blaze_rod:
         material: BLAZE_ROD
-        name: "&6Blaze Rod"
-        slot: 9
+        name: "&7Blaze Rod"
+        slot: 10
         price: 150
         currency: MONEY
         delivery: VANILLA
@@ -262,19 +242,19 @@ categories:
 
       nether_wart:
         material: NETHER_WART
-        name: "&cNether Wart"
-        slot: 10
-        price: 96
+        name: "&7Nether Wart"
+        slot: 11
+        price: 50
         currency: MONEY
         delivery: VANILLA
         amount: 1
         enabled: true
 
-      glowstone_dust:
-        material: GLOWSTONE_DUST
-        name: "&eGlowstone Dust"
-        slot: 11
-        price: 15
+      gold_ingot:
+        material: GOLD_INGOT
+        name: "&7Gold Ingot"
+        slot: 12
+        price: 200
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -282,9 +262,9 @@ categories:
 
       magma_cream:
         material: MAGMA_CREAM
-        name: "&6Magma Cream"
-        slot: 12
-        price: 96
+        name: "&7Magma Cream"
+        slot: 13
+        price: 100
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -292,19 +272,9 @@ categories:
 
       ghast_tear:
         material: GHAST_TEAR
-        name: "&fGhast Tear"
-        slot: 13
-        price: 350
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      nether_quartz:
-        material: QUARTZ
-        name: "&fNether Quartz"
+        name: "&7Ghast Tear"
         slot: 14
-        price: 30
+        price: 150
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -312,9 +282,9 @@ categories:
 
       soul_sand:
         material: SOUL_SAND
-        name: "&6Soul Sand"
+        name: "&7Soul Sand"
         slot: 15
-        price: 50
+        price: 150
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -322,36 +292,26 @@ categories:
 
       magma_block:
         material: MAGMA_BLOCK
-        name: "&6Magma Block"
+        name: "&7Magma Block"
         slot: 16
-        price: 35
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      crying_obsidian:
-        material: CRYING_OBSIDIAN
-        name: "&5Crying Obsidian"
-        slot: 17
-        price: 150
+        price: 100
         currency: MONEY
         delivery: VANILLA
         amount: 1
         enabled: true
 
   gear:
-    display-name: "&bGear"
+    display-name: "&7Gear"
     material: TOTEM_OF_UNDYING
     slot: 13
     lore:
-      - "&7Click to view the Gear Shop"
+      - "&7Click to view the gear shop"
     items:
 
       obsidian:
         material: OBSIDIAN
-        name: "&8Obsidian"
-        slot: 9
+        name: "&7Obsidian"
+        slot: 10
         price: 100
         currency: MONEY
         delivery: VANILLA
@@ -360,9 +320,9 @@ categories:
 
       end_crystal:
         material: END_CRYSTAL
-        name: "&dEnd Crystal"
-        slot: 10
-        price: 350
+        name: "&7End Crystal"
+        slot: 11
+        price: 150
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -370,8 +330,8 @@ categories:
 
       respawn_anchor:
         material: RESPAWN_ANCHOR
-        name: "&5Respawn Anchor"
-        slot: 11
+        name: "&7Respawn Anchor"
+        slot: 12
         price: 1000
         currency: MONEY
         delivery: VANILLA
@@ -380,8 +340,8 @@ categories:
 
       glowstone:
         material: GLOWSTONE
-        name: "&eGlowstone"
-        slot: 12
+        name: "&7Glowstone"
+        slot: 13
         price: 100
         currency: MONEY
         delivery: VANILLA
@@ -390,9 +350,9 @@ categories:
 
       totem:
         material: TOTEM_OF_UNDYING
-        name: "&6Totem of Undying"
-        slot: 13
-        price: 1500
+        name: "&7Totem of Undying"
+        slot: 14
+        price: 2000
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -400,19 +360,9 @@ categories:
 
       ender_pearl:
         material: ENDER_PEARL
-        name: "&dEnder Pearl"
-        slot: 14
-        price: 75
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      golden_apple:
-        material: GOLDEN_APPLE
-        name: "&6Golden Apple"
+        name: "&7Ender Pearl"
         slot: 15
-        price: 250
+        price: 75
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -420,7 +370,7 @@ categories:
 
       xp_bottle:
         material: EXPERIENCE_BOTTLE
-        name: "&aBottle o' Enchanting"
+        name: "&7Bottle o' Enchanting"
         slot: 16
         price: 100
         currency: MONEY
@@ -428,99 +378,19 @@ categories:
         amount: 1
         enabled: true
 
-      slow_falling_arrow:
-        material: TIPPED_ARROW
-        name: "&fArrow of Slow Falling"
-        slot: 17
-        price: 500
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
   food:
-    display-name: "&aFood"
+    display-name: "&7Food"
     material: COOKED_BEEF
     slot: 14
     lore:
-      - "&7Click to view the Food Shop"
+      - "&7Click to view the food shop"
     items:
 
-      potato:
-        material: POTATO
-        name: "&ePotato"
-        slot: 9
-        price: 96
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      sweet_berries:
-        material: SWEET_BERRIES
-        name: "&dSweet Berries"
-        slot: 10
-        price: 50
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      melon_slice:
-        material: MELON_SLICE
-        name: "&aMelon Slice"
-        slot: 11
-        price: 36
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      carrot:
-        material: CARROT
-        name: "&6Carrot"
-        slot: 12
-        price: 96
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      apple:
-        material: APPLE
-        name: "&cApple"
-        slot: 13
-        price: 25
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      cooked_chicken:
-        material: COOKED_CHICKEN
-        name: "&fCooked Chicken"
-        slot: 14
-        price: 48
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      steak:
+      cooked_beef:
         material: COOKED_BEEF
-        name: "&6Steak"
-        slot: 15
-        price: 35
-        currency: MONEY
-        delivery: VANILLA
-        amount: 1
-        enabled: true
-
-      golden_carrot:
-        material: GOLDEN_CARROT
-        name: "&6Golden Carrot"
-        slot: 16
-        price: 120
+        name: "&7Cooked Beef"
+        slot: 10
+        price: 40
         currency: MONEY
         delivery: VANILLA
         amount: 1
@@ -528,26 +398,76 @@ categories:
 
       golden_apple:
         material: GOLDEN_APPLE
-        name: "&6Golden Apple"
-        slot: 17
-        price: 250
+        name: "&7Golden Apple"
+        slot: 11
+        price: 100
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      golden_carrot:
+        material: GOLDEN_CARROT
+        name: "&7Golden Carrot"
+        slot: 12
+        price: 140
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      apple:
+        material: APPLE
+        name: "&7Apple"
+        slot: 13
+        price: 67
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      sweet_berries:
+        material: SWEET_BERRIES
+        name: "&7Sweet Berries"
+        slot: 14
+        price: 10
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      carrot:
+        material: CARROT
+        name: "&7Carrot"
+        slot: 15
+        price: 30
+        currency: MONEY
+        delivery: VANILLA
+        amount: 1
+        enabled: true
+
+      bread:
+        material: BREAD
+        name: "&7Bread"
+        slot: 16
+        price: 35
         currency: MONEY
         delivery: VANILLA
         amount: 1
         enabled: true
 
   shard_shop:
-    display-name: "&dShard Shop"
-    material: AMETHYST_SHARD
+    display-name: "&7Spawner"
+    material: SPAWNER
     slot: 15
     lore:
-      - "&7Purchase spawners and keys with Shards"
+      - "&7Click to view the spawner shop"
     items:
 
       pig_spawner:
         material: SPAWNER
-        name: "&fPig Spawner"
-        slot: 9
+        name: "&7Spawner"
+        slot: 10
         price: 1500
         currency: SHARDS
         delivery: SPAWNER
@@ -557,8 +477,8 @@ categories:
 
       cow_spawner:
         material: SPAWNER
-        name: "&fCow Spawner"
-        slot: 10
+        name: "&7Cow Spawner"
+        slot: 11
         price: 1500
         currency: SHARDS
         delivery: SPAWNER
@@ -568,8 +488,8 @@ categories:
 
       zombie_spawner:
         material: SPAWNER
-        name: "&2Zombie Spawner"
-        slot: 11
+        name: "&7Zombie Spawner"
+        slot: 12
         price: 1500
         currency: SHARDS
         delivery: SPAWNER
@@ -579,8 +499,8 @@ categories:
 
       spider_spawner:
         material: SPAWNER
-        name: "&4Spider Spawner"
-        slot: 12
+        name: "&7Spider Spawner"
+        slot: 13
         price: 1500
         currency: SHARDS
         delivery: SPAWNER
@@ -590,8 +510,8 @@ categories:
 
       skeleton_spawner:
         material: SPAWNER
-        name: "&fSkeleton Spawner"
-        slot: 13
+        name: "&7Skeleton Spawner"
+        slot: 14
         price: 1500
         currency: SHARDS
         delivery: SPAWNER
@@ -601,8 +521,8 @@ categories:
 
       creeper_spawner:
         material: SPAWNER
-        name: "&aCreeper Spawner"
-        slot: 14
+        name: "&7Creeper Spawner"
+        slot: 15
         price: 1500
         currency: SHARDS
         delivery: SPAWNER
@@ -610,20 +530,9 @@ categories:
         enabled: true
         target: creeper_spawner
 
-      zombified_piglin_spawner:
-        material: SPAWNER
-        name: "&6Zombified Piglin Spawner"
-        slot: 15
-        price: 1500
-        currency: SHARDS
-        delivery: SPAWNER
-        amount: 1
-        enabled: true
-        target: zombified_piglin_spawner
-
       blaze_spawner:
         material: SPAWNER
-        name: "&6Blaze Spawner"
+        name: "&7Blaze Spawner"
         slot: 16
         price: 1500
         currency: SHARDS
@@ -632,46 +541,3 @@ categories:
         enabled: true
         target: blaze_spawner
 
-      iron_golem_spawner:
-        material: SPAWNER
-        name: "&fIron Golem Spawner"
-        slot: 17
-        price: 1500
-        currency: SHARDS
-        delivery: SPAWNER
-        amount: 1
-        enabled: true
-        target: iron_golem_spawner
-
-      common_key:
-        material: TRIPWIRE_HOOK
-        name: "&fCommon Key"
-        slot: 19
-        price: 200
-        currency: SHARDS
-        delivery: CRATE_KEY
-        amount: 1
-        enabled: true
-        target: common
-
-      crimson_key:
-        material: TRIPWIRE_HOOK
-        name: "&cCrimson Key"
-        slot: 20
-        price: 2500
-        currency: SHARDS
-        delivery: CRATE_KEY
-        amount: 1
-        enabled: true
-        target: crimson
-
-      prime_key:
-        material: TRIPWIRE_HOOK
-        name: "&6Prime Key"
-        slot: 21
-        price: 2500
-        currency: SHARDS
-        delivery: CRATE_KEY
-        amount: 1
-        enabled: true
-        target: prime
