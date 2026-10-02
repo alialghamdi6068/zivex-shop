@@ -96,6 +96,7 @@ messages:
   invalid-item: "&cUnknown shop item."
   invalid-category: "&cUnknown shop category."
   duplicate-slot: "&cA shop slot is already occupied: {slot}"
+  move-category: "&eMove mode enabled. Click a category slot to swap its position."
 
   no-economy: "&cThe money economy is unavailable right now."
   no-shard-economy: "&cThe Shards economy is unavailable right now."
