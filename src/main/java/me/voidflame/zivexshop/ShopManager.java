@@ -175,7 +175,6 @@ public final class ShopManager {
         String title = plugin.getConfig().getString("settings.purchase-title", "&8Purchase: {item}")
                 .replace("{item}", ChatText.strip(d.name()));
         Inventory inv = Bukkit.createInventory(new ShopHolder(ShopHolder.Type.PURCHASE, d.id()), size, color(title));
-        fillBorder(inv, size, Material.GRAY_STAINED_GLASS_PANE);
 
         long deliveryAmount;
         try {
