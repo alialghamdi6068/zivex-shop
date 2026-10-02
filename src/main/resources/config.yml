@@ -55,7 +55,11 @@ integrations:
   # Smart Spawners
   smart-spawners:
     enabled: true
-    spawner-command: "/ss give {player} {type} {amount}"
+    # AUTO uses SmartSpawner 1.8+ syntax when that version is detected.
+    # Set MODERN or LEGACY if your server uses a custom/older command format.
+    mode: "AUTO"
+    modern-command: "/ss give {player} smart_spawner {type} {amount}"
+    legacy-command: "/ss give {player} {type} {amount}"
 
 sounds:
   open:
