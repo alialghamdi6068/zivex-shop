@@ -1,11 +1,12 @@
 package me.voidflame.zivexshop;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 public final class ShopListener implements Listener {
@@ -26,142 +27,137 @@ public final class ShopListener implements Listener {
         if (!(e.getWhoClicked() instanceof Player p)) return;
 
         String title = e.getView().getTitle();
-        if (e.getView().getTopInventory().getHolder() instanceof ShopManager.ShopHolder) {
-            e.setCancelled(true);
-        }
         if (adminTitle(title)) {
             e.setCancelled(true);
             adminGui.handle(p, title, e.getRawSlot());
             return;
         }
 
-        String main = ZivexShopPlugin.color(plugin.getConfig().getString("settings.main-title", "&8Shop"));
-        if (title.equals(main)) {
-            e.setCancelled(true);
-            int size = normalizedSize(plugin.getConfig().getInt("settings.main-size", 27));
-            if (e.getRawSlot() >= 0 && e.getRawSlot() < size) {
-                for (ShopManager.Category c : shop.categories())
-                    if (c.slot() == e.getRawSlot()) { shop.openCategory(p, c.id()); return; }
-            }
-            return;
-        }
+        if (!(e.getView().getTopInventory().getHolder() instanceof ShopManager.ShopHolder holder)) return;
+        e.setCancelled(true);
 
-        ShopManager.Pending pd = shop.pending(p);
-        if (pd != null) {
-            String pt = ZivexShopPlugin.color(plugin.getConfig().getString("settings.purchase-title", "&8Purchase: {item}")
-                    .replace("{item}", ShopManager.ChatText.strip(pd.item().name())));
-            if (title.equals(pt)) {
-                e.setCancelled(true);
-                int slot = e.getRawSlot();
-                int q = pd.quantity();
-                int step = Math.max(1, plugin.getConfig().getInt("settings.quantity-step", 1));
-                int max = Math.max(1, plugin.getConfig().getInt("settings.max-quantity", 64));
+        int slot = e.getRawSlot();
+        if (slot < 0 || slot >= e.getView().getTopInventory().getSize()) return;
 
-                if (slot == 10) shop.openPurchase(p, pd.item(), Math.max(1, q - 64));
-                else if (slot == 11) shop.openPurchase(p, pd.item(), Math.max(1, q - 16));
-                else if (slot == 12) shop.openPurchase(p, pd.item(), Math.max(1, q - step));
-                else if (slot == 14) shop.openPurchase(p, pd.item(), Math.min(max, q + step));
-                else if (slot == 15) shop.openPurchase(p, pd.item(), Math.min(max, q + 16));
-                else if (slot == 16) shop.openPurchase(p, pd.item(), Math.min(max, q + 64));
-                else if (slot == 21) {
-                    boolean success = shop.purchase(p, pd);
-                    shop.clearPending(p);
-                    if (success && plugin.getConfig().getBoolean("settings.close-on-purchase", true)) p.closeInventory();
-                    else shop.openPurchase(p, pd.item(), q);
-                } else if (slot == 23) {
-                    shop.clearPending(p);
-                    shop.openCategory(p, pd.item().category());
+        switch (holder.type()) {
+            case MAIN -> {
+                for (ShopManager.Category c : shop.categories()) {
+                    if (c.slot() == slot) {
+                        shop.openCategory(p, c.id());
+                        return;
+                    }
                 }
-                return;
             }
+            case CATEGORY -> {
+                ShopManager.Category c = shop.category(holder.id());
+                if (c == null) {
+                    shop.clearPending(p);
+                    p.closeInventory();
+                    return;
+                }
+
+                int backSlot = plugin.getConfig().getInt("settings.back-slot", 18);
+                if (slot == backSlot) {
+                    shop.clearPending(p);
+                    shop.openMain(p);
+                    return;
+                }
+
+                for (ShopManager.ItemDef d : c.items().values()) {
+                    if (d.slot() == slot && d.enabled()) {
+                        shop.openPurchase(p, d, 1);
+                        return;
+                    }
+                }
+            }
+            case PURCHASE -> handlePurchaseClick(p, slot);
+        }
+    }
+
+    private void handlePurchaseClick(Player p, int slot) {
+        ShopManager.Pending pd = shop.pending(p);
+        if (pd == null) {
+            p.closeInventory();
+            return;
         }
 
-        for (ShopManager.Category c : shop.categories()) {
-            String ct = ZivexShopPlugin.color(plugin.getConfig().getString("settings.category-title-format", "&8{category} Shop")
-                    .replace("{category}", ShopManager.ChatText.strip(c.name())));
-            if (!title.equals(ct)) continue;
+        int q = pd.quantity();
+        int max = Math.max(1, plugin.getConfig().getInt("settings.max-quantity", 64));
+        int step = Math.max(1, plugin.getConfig().getInt("settings.quantity-step", 1));
 
-            e.setCancelled(true);
-            int backSlot = plugin.getConfig().getInt("settings.back-slot", 22);
-            if (e.getRawSlot() == backSlot) { shop.openMain(p); return; }
-
-            int size = normalizedSize(plugin.getConfig().getInt("settings.category-size", 27));
-            if (e.getRawSlot() >= 0 && e.getRawSlot() < size) {
-                for (ShopManager.ItemDef d : c.items().values())
-                    if (d.slot() == e.getRawSlot() && d.enabled()) { shop.openPurchase(p, d, 1); return; }
+        // Donut-style confirmation layout:
+        // 10=-10, 11=-1, 13=item, 15=+1, 16=+10, 17=max, 21=cancel, 23=confirm.
+        switch (slot) {
+            case 10 -> shop.openPurchase(p, pd.item(), Math.max(1, q - 10));
+            case 11 -> shop.openPurchase(p, pd.item(), Math.max(1, q - step));
+            case 15 -> shop.openPurchase(p, pd.item(), Math.min(max, q + step));
+            case 16 -> shop.openPurchase(p, pd.item(), Math.min(max, q + 10));
+            case 17 -> shop.openPurchase(p, pd.item(), max);
+            case 21 -> {
+                shop.clearPending(p);
+                shop.openCategory(p, pd.item().category());
             }
-            return;
+            case 23 -> {
+                boolean success = shop.purchase(p, pd);
+                shop.clearPending(p);
+                if (success && plugin.getConfig().getBoolean("settings.close-on-purchase", true)) {
+                    p.closeInventory();
+                } else if (!success) {
+                    shop.openPurchase(p, pd.item(), q);
+                }
+            }
+            default -> { }
         }
     }
 
     private boolean adminTitle(String title) {
         if (title.equals(ZivexShopPlugin.color(ShopAdminGui.MAIN))) return true;
         for (ShopManager.Category c : shop.categories()) {
-            if (title.equals(ZivexShopPlugin.color(ShopAdminGui.CATEGORY.replace("{category}", ShopManager.ChatText.strip(c.name())))))
-                return true;
-            for (ShopManager.ItemDef d : c.items().values())
-                if (title.equals(ZivexShopPlugin.color(ShopAdminGui.ITEM.replace("{item}", ShopManager.ChatText.strip(d.name())))))
-                    return true;
+            if (title.equals(ZivexShopPlugin.color(
+                    ShopAdminGui.CATEGORY.replace("{category}", ShopManager.ChatText.strip(c.name()))))) return true;
+            for (ShopManager.ItemDef d : c.items().values()) {
+                if (title.equals(ZivexShopPlugin.color(
+                        ShopAdminGui.ITEM.replace("{item}", ShopManager.ChatText.strip(d.name()))))) return true;
+            }
         }
         return false;
     }
 
     @EventHandler
     public void drag(InventoryDragEvent e) {
-        String title = e.getView().getTitle();
-        if (e.getView().getTopInventory().getHolder() instanceof ShopManager.ShopHolder) {
+        if (adminTitle(e.getView().getTitle())) {
             e.setCancelled(true);
             return;
         }
-        if (adminTitle(title)) { e.setCancelled(true); return; }
-
-        String main = ZivexShopPlugin.color(plugin.getConfig().getString("settings.main-title", "&8Shop"));
-        String purchasePrefix = ZivexShopPlugin.color(plugin.getConfig().getString("settings.purchase-title", "&8Purchase: {item}")).replace("{item}", "");
-        boolean purchase = title.startsWith(purchasePrefix);
-        boolean category = false;
-        for (ShopManager.Category c : shop.categories()) {
-            String categoryTitle = ZivexShopPlugin.color(
-                    plugin.getConfig().getString("settings.category-title-format", "&8{category} Shop")
-                            .replace("{category}", ShopManager.ChatText.strip(c.name()))
-            );
-            if (title.equals(categoryTitle)) {
-                category = true;
-                break;
-            }
+        if (e.getView().getTopInventory().getHolder() instanceof ShopManager.ShopHolder) {
+            e.setCancelled(true);
         }
-        if (title.equals(main) || purchase || category) e.setCancelled(true);
     }
 
     @EventHandler
     public void close(InventoryCloseEvent e) {
         if (!(e.getPlayer() instanceof Player p)) return;
 
-        String title = e.getView().getTitle();
-        ShopManager.Pending pending = shop.pending(p);
-        if (pending != null) {
-            String purchaseTitle = ZivexShopPlugin.color(
-                    plugin.getConfig().getString("settings.purchase-title", "&8Purchase: {item}")
-                            .replace("{item}", ShopManager.ChatText.strip(pending.item().name()))
-            );
-            if (title.equals(purchaseTitle)) {
-                shop.clearPending(p);
-            }
-        }
-
         if (adminGui.handleClose(p)) {
             adminGui.clear(p);
         }
+
+        if (!(e.getView().getTopInventory().getHolder() instanceof ShopManager.ShopHolder holder)
+                || holder.type() != ShopManager.ShopHolder.Type.PURCHASE) return;
+
+        // Opening another purchase screen closes the old inventory first.
+        // Check the next inventory one tick later before clearing the pending state.
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!(p.getOpenInventory().getTopInventory().getHolder() instanceof ShopManager.ShopHolder next)
+                    || next.type() != ShopManager.ShopHolder.Type.PURCHASE) {
+                shop.clearPending(p);
+            }
+        });
     }
 
     @EventHandler
     public void quit(PlayerQuitEvent e) {
         shop.clearPending(e.getPlayer());
         adminGui.clear(e.getPlayer());
-    }
-
-    private int normalizedSize(int size) {
-        if (size < 9) return 9;
-        if (size > 54) return 54;
-        return size - (size % 9);
     }
 }
