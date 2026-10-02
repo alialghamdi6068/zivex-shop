@@ -208,9 +208,8 @@ public final class ShopManager {
 
     public void openPurchase(Player p, ItemDef d, int quantity) {
         if (!d.enabled()) { p.sendMessage(plugin.msg("item-disabled")); return; }
-        int max = Math.max(1, plugin.getConfig().getInt("settings.max-quantity", 64));
+        int max = Math.max(1, Math.min(64, plugin.getConfig().getInt("settings.max-quantity", 64)));
         quantity = Math.max(1, Math.min(quantity, max));
-        pending.put(p.getUniqueId(), new Pending(d, quantity));
 
         int size = normalizedSize(plugin.getConfig().getInt("settings.purchase-size", 27));
         String title = plugin.getConfig().getString("settings.purchase-title", "&8Confirmation Menu")
@@ -228,7 +227,29 @@ public final class ShopManager {
             p.sendMessage(plugin.msg("invalid-amount"));
             return;
         }
+
+        String currency = d.currency() == null ? "" : d.currency().trim().toUpperCase(Locale.ROOT);
+        String delivery = d.delivery() == null ? "" : d.delivery().trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("MONEY", "SHARDS").contains(currency)) {
+            p.sendMessage(plugin.msg("unsupported-currency").replace("{currency}", d.currency()));
+            return;
+        }
+        if (!Set.of("VANILLA", "CRATE_KEY", "SPAWNER", "COMMAND").contains(delivery)) {
+            p.sendMessage(plugin.msg("invalid-delivery"));
+            return;
+        }
+        if ("SHARDS".equals(currency) && d.price() != Math.rint(d.price())) {
+            p.sendMessage(plugin.msg("invalid-shard-price"));
+            return;
+        }
+
         double total = d.price() * quantity;
+        if (!Double.isFinite(total) || total < 0) {
+            p.sendMessage(plugin.msg("invalid-price"));
+            return;
+        }
+
+        pending.put(p.getUniqueId(), new Pending(d, quantity));
         ItemStack display = icon(d.material(), d.name(), List.of(
                 "&7Unit price: &f" + money(d.price(), d.currency()),
                 "&7Quantity: &f" + quantity,
@@ -283,12 +304,6 @@ public final class ShopManager {
 
     private String trim(double n) {
         return Math.rint(n) == n ? String.format(Locale.US, "%,.0f", n) : String.format(Locale.US, "%,.2f", n);
-    }
-
-    private void fillBorder(Inventory inventory, int size, Material material) {
-        int[] slots = {0,1,2,3,4,5,6,7,8,9,17,18,24,25,26};
-        ItemStack filler = icon(material, " ", List.of());
-        for (int slot : slots) if (slot < size && inventory.getItem(slot) == null) inventory.setItem(slot, filler.clone());
     }
 
     private ItemStack icon(Material m, String name, List<String> lore) {
