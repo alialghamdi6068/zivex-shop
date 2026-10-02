@@ -34,7 +34,7 @@ final class ShopAdminGui {
             p.sendMessage(plugin.msg("editor-disabled"));
             return;
         }
-        Inventory inv = Bukkit.createInventory(null, 27, color(MAIN));
+        Inventory inv = Bukkit.createInventory(new AdminHolder(AdminHolder.Type.MAIN, null, null), 27, color(MAIN));
         for (ShopManager.Category c : shop.categories())
             if (c.slot() >= 0 && c.slot() < 27) inv.setItem(c.slot(), icon(c.material(), c.name(), c.lore()));
         inv.setItem(18, icon(Material.COMPASS, "&dReload Config", List.of("&7Reload the shop configuration")));
@@ -49,7 +49,8 @@ final class ShopAdminGui {
     void openCategory(Player p, ShopManager.Category c) {
         deleteConfirm.remove(p.getUniqueId());
         movingCategory.remove(p.getUniqueId());
-        Inventory inv = Bukkit.createInventory(null, 27, color(CATEGORY.replace("{category}", ShopManager.ChatText.strip(c.name()))));
+        Inventory inv = Bukkit.createInventory(new AdminHolder(AdminHolder.Type.CATEGORY, c.id(), null), 27,
+                color(CATEGORY.replace("{category}", ShopManager.ChatText.strip(c.name()))));
         for (ShopManager.ItemDef d : c.items().values()) {
             if (d.slot() >= 0 && d.slot() < 27)
                 inv.setItem(d.slot(), icon(d.material(), d.name(), List.of(
@@ -66,7 +67,7 @@ final class ShopAdminGui {
     }
 
     void openItem(Player p, ShopManager.ItemDef d) {
-        Inventory inv = Bukkit.createInventory(null, 27,
+        Inventory inv = Bukkit.createInventory(new AdminHolder(AdminHolder.Type.ITEM, d.category(), d.id()), 27,
                 color(ITEM.replace("{item}", ShopManager.ChatText.strip(d.name()))));
         inv.setItem(4, icon(d.material(), d.name(), List.of(
                 "&7Price: &f" + price(d),
@@ -267,6 +268,29 @@ final class ShopAdminGui {
         meta.setLore(lore.stream().map(ZivexShopPlugin::color).toList());
         i.setItemMeta(meta);
         return i;
+    }
+
+    static final class AdminHolder implements org.bukkit.inventory.InventoryHolder {
+        enum Type { MAIN, CATEGORY, ITEM }
+
+        private final Type type;
+        private final String category;
+        private final String item;
+
+        AdminHolder(Type type, String category, String item) {
+            this.type = type;
+            this.category = category;
+            this.item = item;
+        }
+
+        Type type() { return type; }
+        String category() { return category; }
+        String item() { return item; }
+
+        @Override
+        public Inventory getInventory() {
+            return null;
+        }
     }
 
     private String color(String s) { return ZivexShopPlugin.color(s); }
