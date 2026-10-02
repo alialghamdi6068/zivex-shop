@@ -17,6 +17,7 @@ final class ShopAdminGui {
     private final ZivexShopPlugin plugin;
     private final ShopManager shop;
     private final Map<UUID, String> moving = new HashMap<>();
+    private final Set<UUID> movingCategory = new HashSet<>();
     private final Set<UUID> suppressCloseClear = new HashSet<>();
     private final Set<UUID> deleteConfirm = new HashSet<>();
 
@@ -27,24 +28,28 @@ final class ShopAdminGui {
 
     void open(Player p) {
         moving.remove(p.getUniqueId());
+        movingCategory.remove(p.getUniqueId());
         deleteConfirm.remove(p.getUniqueId());
         if (!plugin.getConfig().getBoolean("settings.editor-enabled", true)) {
             p.sendMessage(plugin.msg("editor-disabled"));
             return;
         }
         Inventory inv = Bukkit.createInventory(null, 27, color(MAIN));
-        fillBorder(inv, new int[]{0,1,2,3,4,5,6,7,8,9,10,16,17,19,20,21,23,24,25,26});
         for (ShopManager.Category c : shop.categories())
             if (c.slot() >= 0 && c.slot() < 27) inv.setItem(c.slot(), icon(c.material(), c.name(), c.lore()));
         inv.setItem(18, icon(Material.COMPASS, "&dReload Config", List.of("&7Reload the shop configuration")));
+        inv.setItem(19, icon(Material.COMPARATOR, "&bMove Categories", List.of(
+                "&7Click this, then click a category slot",
+                "&7Categories swap positions automatically"
+        )));
         inv.setItem(22, icon(Material.BARRIER, "&cClose", List.of("&7Close the editor")));
         openInventory(p, inv);
     }
 
     void openCategory(Player p, ShopManager.Category c) {
         deleteConfirm.remove(p.getUniqueId());
+        movingCategory.remove(p.getUniqueId());
         Inventory inv = Bukkit.createInventory(null, 27, color(CATEGORY.replace("{category}", ShopManager.ChatText.strip(c.name()))));
-        fillBorder(inv, new int[]{0,1,2,3,4,5,6,7,8,9,17,18,24,25});
         for (ShopManager.ItemDef d : c.items().values()) {
             if (d.slot() >= 0 && d.slot() < 27)
                 inv.setItem(d.slot(), icon(d.material(), d.name(), List.of(
@@ -63,7 +68,6 @@ final class ShopAdminGui {
     void openItem(Player p, ShopManager.ItemDef d) {
         Inventory inv = Bukkit.createInventory(null, 27,
                 color(ITEM.replace("{item}", ShopManager.ChatText.strip(d.name()))));
-        fillBorder(inv, new int[]{0,1,2,3,4,5,6,7,8,9,17,18,21,23,25,26});
         inv.setItem(4, icon(d.material(), d.name(), List.of(
                 "&7Price: &f" + price(d),
                 "&7Slot: &f" + d.slot(),
@@ -93,9 +97,25 @@ final class ShopAdminGui {
         String main = color(MAIN);
         if (title.equals(main)) {
             if (slot == 18) { plugin.reloadShop(); open(p); return true; }
+            if (slot == 19) {
+                movingCategory.add(p.getUniqueId());
+                p.sendMessage(plugin.msg("move-category"));
+                return true;
+            }
             if (slot == 22) { p.closeInventory(); return true; }
-            for (ShopManager.Category c : shop.categories())
-                if (c.slot() == slot) { openCategory(p, c); return true; }
+            for (ShopManager.Category c : shop.categories()) {
+                if (c.slot() == slot) {
+                    if (movingCategory.remove(p.getUniqueId())) {
+                        if (shop.setCategorySlot(c.id(), slot)) {
+                            open(p);
+                            p.sendMessage(plugin.msg("slot-updated"));
+                        }
+                        return true;
+                    }
+                    openCategory(p, c);
+                    return true;
+                }
+            }
             return true;
         }
 
@@ -194,6 +214,7 @@ final class ShopAdminGui {
         UUID id = p.getUniqueId();
         suppressCloseClear.remove(id);
         moving.remove(id);
+        movingCategory.remove(id);
         deleteConfirm.remove(id);
     }
 
