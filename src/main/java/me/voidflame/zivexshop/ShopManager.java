@@ -172,7 +172,7 @@ public final class ShopManager {
         pending.put(p.getUniqueId(), new Pending(d, quantity));
 
         int size = normalizedSize(plugin.getConfig().getInt("settings.purchase-size", 27));
-        String title = plugin.getConfig().getString("settings.purchase-title", "&8Purchase: {item}")
+        String title = plugin.getConfig().getString("settings.purchase-title", "&8Confirmation Menu")
                 .replace("{item}", ChatText.strip(d.name()));
         Inventory inv = Bukkit.createInventory(new ShopHolder(ShopHolder.Type.PURCHASE, d.id()), size, color(title));
 
@@ -195,14 +195,13 @@ public final class ShopManager {
         display.setAmount((int) Math.min(deliveryAmount, Math.max(1, display.getMaxStackSize())));
         inv.setItem(13, display);
 
-        inv.setItem(10, icon(Material.REDSTONE_BLOCK, "&c-64", List.of("&7Remove 64")));
-        inv.setItem(11, icon(Material.RED_DYE, "&c-16", List.of("&7Remove 16")));
-        inv.setItem(12, icon(Material.RED_WOOL, "&c-1", List.of("&7Remove 1")));
-        inv.setItem(14, icon(Material.LIME_WOOL, "&a+1", List.of("&7Add 1")));
-        inv.setItem(15, icon(Material.LIME_DYE, "&a+16", List.of("&7Add 16")));
-        inv.setItem(16, icon(Material.EMERALD_BLOCK, "&a+64", List.of("&7Add 64")));
-        inv.setItem(21, icon(Material.GREEN_WOOL, "&aConfirm", List.of("&7Purchase the selected quantity")));
-        inv.setItem(23, icon(Material.RED_WOOL, "&cCancel", List.of("&7Return to the shop")));
+        inv.setItem(10, icon(Material.RED_STAINED_GLASS_PANE, "&cRemove 10", List.of("&fCLICK TO REMOVE")));
+        inv.setItem(11, icon(Material.RED_STAINED_GLASS_PANE, "&cRemove 1", List.of("&fCLICK TO REMOVE")));
+        inv.setItem(15, icon(Material.LIME_STAINED_GLASS_PANE, "&aAdd 1", List.of("&fCLICK TO ADD")));
+        inv.setItem(16, icon(Material.LIME_STAINED_GLASS_PANE, "&aAdd 10", List.of("&fCLICK TO ADD")));
+        inv.setItem(17, icon(Material.LIME_STAINED_GLASS_PANE, "&aSet To 64", List.of("&fCLICK TO SET")));
+        inv.setItem(21, icon(Material.RED_STAINED_GLASS_PANE, "&cCancel", List.of("&fCLICK TO CANCEL")));
+        inv.setItem(23, icon(Material.LIME_STAINED_GLASS_PANE, "&aConfirm", List.of("&fCLICK TO BUY")));
 
         p.openInventory(inv);
         sound(p, "purchase");
@@ -213,9 +212,9 @@ public final class ShopManager {
 
     private List<String> loreFor(ItemDef d) {
         List<String> l = new ArrayList<>(d.lore());
-        l.add("&7Price: &f" + money(d.price(), d.currency()));
-        l.add("&7Per purchase: &f" + d.amount() + " item(s)");
-        l.add("&eClick to purchase");
+        l.add("&7Price: &a" + money(d.price(), d.currency()));
+        l.add("");
+        l.add("&7Click to purchase");
         return l;
     }
 
