@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -132,7 +133,7 @@ public final class ShopManager {
 
     public void openMain(Player p) {
         int size = normalizedSize(plugin.getConfig().getInt("settings.main-size", 27));
-        Inventory inv = Bukkit.createInventory(null, size,
+        Inventory inv = Bukkit.createInventory(new ShopHolder(ShopHolder.Type.MAIN, null), size,
                 color(plugin.getConfig().getString("settings.main-title", "&8Shop")));
         fillBorder(inv, size, Material.GRAY_STAINED_GLASS_PANE);
         for (Category c : categories.values()) {
@@ -150,7 +151,7 @@ public final class ShopManager {
         int size = normalizedSize(plugin.getConfig().getInt("settings.category-size", 27));
         String title = plugin.getConfig().getString("settings.category-title-format", "&8{category} Shop")
                 .replace("{category}", ChatText.strip(c.name()));
-        Inventory inv = Bukkit.createInventory(null, size, color(title));
+        Inventory inv = Bukkit.createInventory(new ShopHolder(ShopHolder.Type.CATEGORY, c.id()), size, color(title));
 
         fillBorder(inv, size, Material.GRAY_STAINED_GLASS_PANE);
         for (ItemDef d : c.items().values()) {
@@ -175,7 +176,7 @@ public final class ShopManager {
         int size = normalizedSize(plugin.getConfig().getInt("settings.purchase-size", 27));
         String title = plugin.getConfig().getString("settings.purchase-title", "&8Purchase: {item}")
                 .replace("{item}", ChatText.strip(d.name()));
-        Inventory inv = Bukkit.createInventory(null, size, color(title));
+        Inventory inv = Bukkit.createInventory(new ShopHolder(ShopHolder.Type.PURCHASE, d.id()), size, color(title));
         fillBorder(inv, size, Material.GRAY_STAINED_GLASS_PANE);
 
         long deliveryAmount;
@@ -396,27 +397,82 @@ public final class ShopManager {
 
         if ("CRATE_KEY".equalsIgnoreCase(d.delivery())) {
             if (!plugin.getConfig().getBoolean("integrations.phoenix-crate-lite.enabled", true)) return false;
-            return dispatch(plugin.getConfig().getString("integrations.phoenix-crate-lite.key-command",
-                    "/crates giveKey {key} {player} {amount}"), p, d.target(), amount);
+            return dispatchConfigured(
+                    plugin.getConfig().getString("integrations.phoenix-crate-lite.key-command",
+                            "/crates giveKey {key} {player} {amount}"),
+                    p, d.target(), amount);
         }
 
         if ("SPAWNER".equalsIgnoreCase(d.delivery())) {
             if (!plugin.getConfig().getBoolean("integrations.smart-spawners.enabled", true)) return false;
-            return dispatch(plugin.getConfig().getString("integrations.smart-spawners.spawner-command",
-                    "/ss give {player} {type} {amount}"), p, d.target(), amount);
+            return dispatchSpawner(p, d.target(), amount);
         }
 
-        if ("COMMAND".equalsIgnoreCase(d.delivery())) return dispatch(d.target(), p, d.target(), amount);
+        if ("COMMAND".equalsIgnoreCase(d.delivery())) return dispatchConfigured(d.target(), p, d.target(), amount);
         return false;
     }
 
-    private boolean dispatch(String raw, Player p, String target, int amount) {
+    private boolean dispatchSpawner(Player p, String target, int amount) {
+        String mode = plugin.getConfig().getString("integrations.smart-spawners.mode", "AUTO");
+        if (mode == null) mode = "AUTO";
+        mode = mode.trim().toUpperCase(Locale.ROOT);
+
+        String modern = plugin.getConfig().getString("integrations.smart-spawners.modern-command",
+                "/ss give {player} smart_spawner {type} {amount}");
+        String legacy = plugin.getConfig().getString("integrations.smart-spawners.legacy-command",
+                "/ss give {player} {type} {amount}");
+
+        if ("MODERN".equals(mode)) return dispatchConfigured(modern, p, target, amount);
+        if ("LEGACY".equals(mode)) return dispatchConfigured(legacy, p, target, amount);
+
+        org.bukkit.plugin.Plugin smartSpawner =
+                Bukkit.getPluginManager().getPlugin("SmartSpawner");
+        if (smartSpawner == null || !smartSpawner.isEnabled()) {
+            plugin.getLogger().warning("SmartSpawner delivery requested but SmartSpawner is not installed/enabled.");
+            return false;
+        }
+
+        if (atLeastVersion(smartSpawner.getDescription().getVersion(), 1, 8, 0)) {
+            return dispatchConfigured(modern, p, target, amount);
+        }
+        return dispatchConfigured(legacy, p, target, amount);
+    }
+
+    private boolean dispatchConfigured(String raw, Player p, String target, int amount) {
         if (raw == null || raw.isBlank()) return false;
         String cmd = raw.trim();
         if (cmd.startsWith("/")) cmd = cmd.substring(1);
-        cmd = cmd.replace("{player}", p.getName()).replace("{key}", target)
-                .replace("{type}", target).replace("{amount}", String.valueOf(amount));
-        return Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+        cmd = cmd.replace("{player}", p.getName())
+                .replace("{key}", target)
+                .replace("{type}", target)
+                .replace("{amount}", String.valueOf(amount));
+
+        String label = cmd.split("\\s+", 2)[0].toLowerCase(Locale.ROOT);
+        if (Bukkit.getPluginCommand(label) == null) {
+            plugin.getLogger().warning("Configured delivery command is unavailable: /" + label);
+            return false;
+        }
+
+        boolean executed = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+        if (!executed) {
+            plugin.getLogger().warning("Delivery command returned false: /" + cmd);
+        }
+        return executed;
+    }
+
+    private boolean atLeastVersion(String raw, int major, int minor, int patch) {
+        if (raw == null) return false;
+        String[] parts = raw.replaceFirst("^[vV]", "").split("\\.");
+        int[] actual = {0, 0, 0};
+        for (int i = 0; i < Math.min(3, parts.length); i++) {
+            String number = parts[i].replaceAll("[^0-9].*$", "");
+            if (number.isBlank()) return false;
+            try { actual[i] = Integer.parseInt(number); }
+            catch (NumberFormatException ex) { return false; }
+        }
+        if (actual[0] != major) return actual[0] > major;
+        if (actual[1] != minor) return actual[1] > minor;
+        return actual[2] >= patch;
     }
 
     private void sound(Player p, String key) {
@@ -518,6 +574,26 @@ public final class ShopManager {
         if (amount > Integer.MAX_VALUE) return false;
         if ("VANILLA".equalsIgnoreCase(d.delivery()) && !canFit(target, createDeliveryItem(d), amount)) return false;
         return deliver(target, d, (int) amount);
+    }
+
+    static final class ShopHolder implements InventoryHolder {
+        enum Type { MAIN, CATEGORY, PURCHASE }
+
+        private final Type type;
+        private final String id;
+
+        ShopHolder(Type type, String id) {
+            this.type = type;
+            this.id = id;
+        }
+
+        Type type() { return type; }
+        String id() { return id; }
+
+        @Override
+        public Inventory getInventory() {
+            return null;
+        }
     }
 
     static String color(String s) { return ZivexShopPlugin.color(s); }
