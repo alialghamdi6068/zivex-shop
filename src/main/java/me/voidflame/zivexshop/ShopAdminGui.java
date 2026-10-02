@@ -17,7 +17,7 @@ final class ShopAdminGui {
     private final ZivexShopPlugin plugin;
     private final ShopManager shop;
     private final Map<UUID, String> moving = new HashMap<>();
-    private final Set<UUID> movingCategory = new HashSet<>();
+    private final Map<UUID, String> movingCategory = new HashMap<>();
     private final Set<UUID> suppressCloseClear = new HashSet<>();
     private final Set<UUID> deleteConfirm = new HashSet<>();
 
@@ -98,20 +98,37 @@ final class ShopAdminGui {
         if (title.equals(main)) {
             if (slot == 18) { plugin.reloadShop(); open(p); return true; }
             if (slot == 19) {
-                movingCategory.add(p.getUniqueId());
+                movingCategory.put(p.getUniqueId(), "");
                 p.sendMessage(plugin.msg("move-category"));
                 return true;
             }
             if (slot == 22) { p.closeInventory(); return true; }
+            String movingId = movingCategory.get(p.getUniqueId());
+            if (movingId != null) {
+                if (movingId.isBlank()) {
+                    for (ShopManager.Category c : shop.categories()) {
+                        if (c.slot() == slot) {
+                            movingCategory.put(p.getUniqueId(), c.id());
+                            p.sendMessage(plugin.msg("move-category-target"));
+                            return true;
+                        }
+                    }
+                    p.sendMessage(plugin.msg("invalid-slot"));
+                    return true;
+                }
+
+                if (shop.setCategorySlot(movingId, slot)) {
+                    movingCategory.remove(p.getUniqueId());
+                    open(p);
+                    p.sendMessage(plugin.msg("slot-updated"));
+                } else {
+                    p.sendMessage(plugin.msg("invalid-slot"));
+                }
+                return true;
+            }
+
             for (ShopManager.Category c : shop.categories()) {
                 if (c.slot() == slot) {
-                    if (movingCategory.remove(p.getUniqueId())) {
-                        if (shop.setCategorySlot(c.id(), slot)) {
-                            open(p);
-                            p.sendMessage(plugin.msg("slot-updated"));
-                        }
-                        return true;
-                    }
                     openCategory(p, c);
                     return true;
                 }
